@@ -1,17 +1,16 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
-
-class Login(BaseModel):
-    username: str
-    password: str
+from pydantic import BaseModel, constr
 
 
 class Token(BaseModel):
-    access_token: str
+    token: str
     token_type: str
 
 
 class TokenData(BaseModel):
-    email: Optional[str] = None
+    phone_number: Optional[str] = None
+
+
+class AuthCode(BaseModel):
+    code: constr(max_length=6)

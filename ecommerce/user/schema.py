@@ -11,6 +11,9 @@ class User(BaseModel):
     email: str
     password: str
 
+    class Config:
+        from_attributes = True
+
 
 class DisplayUser(BaseModel):
     id: int
@@ -19,4 +22,4 @@ class DisplayUser(BaseModel):
     is_admin: Optional[bool]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

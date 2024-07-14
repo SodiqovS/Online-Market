@@ -7,7 +7,7 @@ class Image(BaseModel):
     url: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CategoryBase(BaseModel):
@@ -22,7 +22,7 @@ class Category(CategoryBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ListCategory(BaseModel):
@@ -30,7 +30,7 @@ class ListCategory(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProductBase(BaseModel):
@@ -58,14 +58,14 @@ class Product(ProductBase):
     images: List[Image] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProductListing(Product):
     category: ListCategory
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProductPaging(BaseModel):

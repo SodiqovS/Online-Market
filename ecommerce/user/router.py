@@ -23,23 +23,18 @@ router = APIRouter(
 )
 
 
-# Interesting Question for Global Dependency
-# https://github.com/tiangolo/fastapi/issues/2481
-
-
-@router.post('/', status_code=status.HTTP_201_CREATED)
-async def create_user_registration(request: schema.User, database: Session = Depends(db.get_db)):
-    # Read More : Pydantic Validation with Database (https://github.com/tiangolo/fastapi/issues/979)
-
-    user = await validator.verify_email_exist(request.email, database)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this phone already exists in the system.",
-        )
-
-    new_user = await services.new_user_register(request, database)
-    return new_user
+# @router.post('/', status_code=status.HTTP_201_CREATED)
+# async def create_user_registration(request: schema.User, database: Session = Depends(db.get_db)):
+#
+#     user = await validator.verify_email_exist(request.email, database)
+#     if user:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="The user with this phone already exists in the system.",
+#         )
+#
+#     new_user = await services.new_user_register(request, database)
+#     return new_user
 
 
 @router.get('/', response_model=Page[schema.DisplayUser])

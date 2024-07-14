@@ -12,7 +12,7 @@ class ShowOrderDetails(BaseModel):
     product_order_details: ProductListing
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ShowOrder(BaseModel):
@@ -24,4 +24,4 @@ class ShowOrder(BaseModel):
     order_details: List[ShowOrderDetails] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True

@@ -1,26 +1,30 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from sqlalchemy.orm import relationship
 from ecommerce.db import Base
-from . import hashing
 
 
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50))
-    email = Column(String(255), unique=True)
-    password = Column(String(255))
+    first_name = Column(String(255), nullable=False)
+    last_name = Column(String(255), nullable=True)
+    phone_number = Column(String(255), unique=True)
+    telegram_id = Column(String(255), unique=True)
+    username = Column(String(255), unique=True, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
     order = relationship("Order", back_populates="user_info")
     cart = relationship("Cart", back_populates="user_cart")
 
     is_admin = Column(Boolean, default=False)
 
-    def __init__(self, name, email, password, *args, **kwargs):
-        self.name = name
-        self.email = email
-        self.password = hashing.get_password_hash(password)
+    def __str__(self):
+        return f'{self.first_name} {self.last_name}'
 
-    def check_password(self, password):
-        return hashing.verify_password(self.password, password)
-
+    def __init__(self, first_name, last_name, phone_number, telegram_id, *args, **kwargs):
+        super().__init__(**kwargs)
+        self.first_name = first_name
+        self.last_name = last_name
+        self.phone_number = phone_number
+        self.telegram_id = telegram_id
