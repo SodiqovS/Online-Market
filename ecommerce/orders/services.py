@@ -9,7 +9,7 @@ from . import tasks
 
 
 async def initiate_order(current_user, database) -> Order:
-    user_info = database.query(User).filter(User.email == current_user.email).first()
+    user_info = database.query(User).filter(User.phone_number == current_user.phone_number).first()
     cart = database.query(Cart).filter(Cart.user_id == user_info.id).first()
 
     cart_items_objects = database.query(CartItems).filter(Cart.id == cart.id)
@@ -47,7 +47,7 @@ async def initiate_order(current_user, database) -> Order:
 
 
 async def get_order_listing(current_user, database) -> List[Order]:
-    user_info = database.query(User).filter(User.email == current_user.email).first()
+    user_info = database.query(User).filter(User.phone_number == current_user.phone_number).first()
     orders = database.query(Order).filter(Order.customer_id == user_info.id).all()
     return orders
 

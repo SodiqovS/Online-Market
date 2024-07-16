@@ -1,5 +1,6 @@
 # telegram_bot.py
 import logging
+
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
@@ -12,7 +13,10 @@ TOKEN = config.BOT_TOKEN
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
-
+logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s',
+                    level=logging.INFO,
+                    # level=logging.DEBUG,  # Можно заменить на другой уровень логгирования.
+                    )
 
 def get_contact_button():
     button = ReplyKeyboardMarkup(resize_keyboard=True)

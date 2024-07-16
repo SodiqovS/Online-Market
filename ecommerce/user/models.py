@@ -12,6 +12,7 @@ class User(Base):
     phone_number = Column(String(255), unique=True)
     telegram_id = Column(String(255), unique=True)
     username = Column(String(255), unique=True, nullable=True)
+    address = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     order = relationship("Order", back_populates="user_info")

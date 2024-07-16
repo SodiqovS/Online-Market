@@ -23,25 +23,11 @@ router = APIRouter(
 )
 
 
-# @router.post('/', status_code=status.HTTP_201_CREATED)
-# async def create_user_registration(request: schema.User, database: Session = Depends(db.get_db)):
-#
-#     user = await validator.verify_email_exist(request.email, database)
-#     if user:
-#         raise HTTPException(
-#             status_code=400,
-#             detail="The user with this phone already exists in the system.",
-#         )
-#
-#     new_user = await services.new_user_register(request, database)
-#     return new_user
-
-
 @router.get('/', response_model=Page[schema.DisplayUser])
 async def get_all_users(database: Session = Depends(db.get_db),
                         filters: FilterValues = Depends(create_filters_from_model(schema.DisplayUser)),
                         current_admin: schema.User = Depends(get_current_admin)) -> Page[schema.DisplayUser]:
-    query = apply_filters(select(schema.DisplayUser), filters)
+    query = apply_filters(select(User), filters)
     return paginate(database, query)
 
 
@@ -53,5 +39,5 @@ async def get_user_by_id(user_id: int, database: Session = Depends(db.get_db),
 
 @router.delete('/{user_id}', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 async def delete_user_by_id(user_id: int, database: Session = Depends(db.get_db),
-                            current_user: schema.User = Depends(get_current_user)):
+                            current_admin: schema.User = Depends(get_current_admin)):
     return await services.delete_user_by_id(user_id, database)

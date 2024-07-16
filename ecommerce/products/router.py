@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from ecommerce import db
 from . import schema, services, validator
-from ..auth.jwt import get_current_admin
-from ..user.schema import User
+from ecommerce.auth.jwt import get_current_admin
+from ecommerce.user.schema import User
 
 router = APIRouter(
     tags=['Products'],

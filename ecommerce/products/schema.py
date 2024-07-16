@@ -1,5 +1,5 @@
 from pydantic import BaseModel, constr
-from typing import List, Optional
+from typing import List, Optional, Union
 
 
 class Image(BaseModel):
@@ -46,11 +46,11 @@ class ProductCreate(ProductBase):
 
 
 class ProductUpdate(BaseModel):
-    name: Optional[constr(min_length=2, max_length=50)]
-    quantity: Optional[int]
-    description: Optional[str]
-    price: Optional[float]
-    category_id: Optional[int]
+    name: Union[constr(min_length=2, max_length=50), None] = None
+    quantity: Union[int, None] = None
+    description: Union[str, None] = None
+    price: Union[float, None] = None
+    category_id: Union[int, None] = None
 
 
 class Product(ProductBase):
@@ -62,7 +62,7 @@ class Product(ProductBase):
 
 
 class ProductListing(Product):
-    category: ListCategory
+    category: CategoryBase
 
     class Config:
         from_attributes = True

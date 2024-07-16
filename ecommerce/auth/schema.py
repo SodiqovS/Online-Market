@@ -10,6 +10,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     phone_number: Optional[str] = None
+    token_type: Optional[str] = None
 
 
 class AuthCode(BaseModel):
