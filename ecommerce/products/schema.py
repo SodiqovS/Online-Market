@@ -56,13 +56,14 @@ class ProductUpdate(BaseModel):
 class Product(ProductBase):
     id: int
     images: List[Image] = []
+    category: Category
 
     class Config:
         from_attributes = True
 
 
 class ProductListing(Product):
-    category: CategoryBase
+    category: ListCategory
 
     class Config:
         from_attributes = True
