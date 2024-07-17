@@ -14,4 +14,4 @@ class TokenData(BaseModel):
 
 
 class AuthCode(BaseModel):
-    code: constr(max_length=6)
+    code: constr(min_length=6, max_length=6)

@@ -20,16 +20,16 @@ router = APIRouter(
     prefix='/products'
 )
 
-
-@router.get('/category/fake')
-async def fake_category(database: Session = Depends(db.get_db)):
-    fake = Faker()
-    for _ in range(10):
-        new_category = Category(name=fake.name())
-        database.add(new_category)
-        database.commit()
-        database.refresh(new_category)
-    return {'message': 'Category fake data'}
+#
+# @router.get('/category/fake')
+# async def fake_category(database: Session = Depends(db.get_db)):
+#     fake = Faker()
+#     for _ in range(10):
+#         new_category = Category(name=fake.name())
+#         database.add(new_category)
+#         database.commit()
+#         database.refresh(new_category)
+#     return {'message': 'Category fake data'}
 
 
 @router.post('/category', status_code=status.HTTP_201_CREATED)
@@ -58,23 +58,23 @@ async def delete_category_by_id(category_id: int,
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.get('/fake')
-async def fake_products(database: Session = Depends(db.get_db)):
-    fake = Faker()
-    for _ in range(100):
-        new_product = Product(
-            name=fake.name(),
-            quantity=fake.random_int(100, 1000),
-            description=fake.text(max_nb_chars=1000, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
-            price=fake.random_int(1000, 10000000),
-            category_id=fake.random_int(1, 11),
-        )
-        database.add(new_product)
-        database.commit()
-        database.refresh(new_product)
-
-    return {'message': 'Fake successfully'}
-
+# @router.get('/fake')
+# async def fake_products(database: Session = Depends(db.get_db)):
+#     fake = Faker()
+#     for _ in range(100):
+#         new_product = Product(
+#             name=fake.name(),
+#             quantity=fake.random_int(100, 1000),
+#             description=fake.text(max_nb_chars=1000, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
+#             price=fake.random_int(1000, 10000000),
+#             category_id=fake.random_int(1, 11),
+#         )
+#         database.add(new_product)
+#         database.commit()
+#         database.refresh(new_product)
+#
+#     return {'message': 'Fake successfully'}
+#
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=schema.Product)
 async def create_product(request: schema.ProductCreate, database: Session = Depends(db.get_db),

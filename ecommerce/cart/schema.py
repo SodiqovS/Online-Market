@@ -9,6 +9,7 @@ from ecommerce.products.schema import Product
 class ShowCartItems(BaseModel):
     id: int
     products: Product
+    quantity: int
     created_date: datetime.datetime
 
     class Config:

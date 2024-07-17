@@ -1,15 +1,12 @@
 import uvicorn
 from celery import Celery
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-
-from fastapi.responses import JSONResponse
-
 from ecommerce import config
 from ecommerce.auth import router as auth_router
-from ecommerce.bot.telegram_bot import run_bot
+
 from ecommerce.cart import router as cart_router
 from ecommerce.orders import router as order_router
 from ecommerce.products import router as product_router

@@ -1,45 +1,52 @@
 from typing import List
 
 from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 
 from ecommerce.cart.models import Cart, CartItems
 from ecommerce.orders.models import Order, OrderDetails
-from ecommerce.user.models import User
-from . import tasks
 
 
-async def initiate_order(current_user, database) -> Order:
-    user_info = database.query(User).filter(User.phone_number == current_user.phone_number).first()
-    cart = database.query(Cart).filter(Cart.user_id == user_info.id).first()
+async def initiate_order(current_user, database: Session) -> Order:
+    cart = database.query(Cart).filter(Cart.user_id == current_user.id).first()
 
-    cart_items_objects = database.query(CartItems).filter(Cart.id == cart.id)
-    if not cart_items_objects.count():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No Items found in Cart !")
+    if not cart:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No Cart found for current user!")
 
-    total_amount: float = 0.0
+    cart_items_objects = database.query(CartItems).filter(CartItems.cart_id == cart.id).all()
+    if not cart_items_objects:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No Items found in Cart!")
+
+    total_amount: int = 0
     for item in cart_items_objects:
-        total_amount += item.products.price
+        product = item.products
+        if product.quantity < item.quantity:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Not enough quantity for product {product.name}. Available: {product.quantity}, Requested: {item.quantity}")
+        total_amount += product.price * item.quantity
 
     new_order = Order(order_amount=total_amount,
-                      shipping_address="587 Hinkle Deegan Lake Road, Syracuse, New York",
-                      customer_id=user_info.id)
+                      shipping_address=current_user.address,
+                      customer_id=current_user.id)
     database.add(new_order)
     database.commit()
     database.refresh(new_order)
 
     bulk_order_details_objects = list()
     for item in cart_items_objects:
+        product = item.products
+        product.quantity -= item.quantity
+        database.commit()
+
         new_order_details = OrderDetails(order_id=new_order.id,
-                                         product_id=item.products.id)
+                                         product_id=item.products.id,
+                                         quantity=item.quantity)
         bulk_order_details_objects.append(new_order_details)
 
     database.bulk_save_objects(bulk_order_details_objects)
     database.commit()
 
-    # Send Email
-    tasks.send_email.delay(current_user.email)
-
-    # clear items in cart
+    # Savatdagi mahsulotlarni tozalash
     database.query(CartItems).filter(CartItems.cart_id == cart.id).delete()
     database.commit()
 
@@ -47,11 +54,12 @@ async def initiate_order(current_user, database) -> Order:
 
 
 async def get_order_listing(current_user, database) -> List[Order]:
-    user_info = database.query(User).filter(User.phone_number == current_user.phone_number).first()
-    orders = database.query(Order).filter(Order.customer_id == user_info.id).all()
+    orders = database.query(Order).filter(Order.customer_id == current_user.id).all()
     return orders
 
 
-async def get_all_orders(current_user, database) -> List[Order]:
+async def get_all_orders(database) -> List[Order]:
     orders = database.query(Order).all()
     return orders
+
+

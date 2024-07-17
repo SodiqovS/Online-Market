@@ -50,6 +50,7 @@ async def login(auth_code: schema.AuthCode, database: Session = Depends(db.get_d
     response = {
         "message": "User verified successfully",
         "status": status.HTTP_200_OK,
+        "user": user,
         "data": {
             "access_token": access_token,
             # "refresh_token": refresh_token,

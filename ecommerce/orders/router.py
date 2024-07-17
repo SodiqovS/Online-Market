@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from ecommerce import db
 from ecommerce.auth.jwt import get_current_user, get_current_admin
-from ecommerce.orders.services import initiate_order, get_order_listing
+from ecommerce.orders.services import initiate_order, get_order_listing, get_all_orders
 from ecommerce.user.schema import User
 from .schema import ShowOrder
 
@@ -32,5 +32,5 @@ async def orders_list(current_user: User = Depends(get_current_user),
 @router.get('/all', status_code=status.HTTP_200_OK, response_model=List[ShowOrder])
 async def all_orders(current_admin: User = Depends(get_current_admin),
                      database: Session = Depends(db.get_db)):
-    result = await get_order_listing(current_admin, database)
+    result = await get_all_orders(database)
     return result

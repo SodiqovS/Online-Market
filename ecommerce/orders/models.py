@@ -12,7 +12,7 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     order_date = Column(DateTime, default=datetime.now)
-    order_amount = Column(Float, default=0.0)
+    order_amount = Column(Integer, default=0)
     order_status = Column(String, default="PROCESSING")
     shipping_address = Column(Text)
     customer_id = Column(Integer, ForeignKey(User.id, ondelete="CASCADE"), )

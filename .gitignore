@@ -3,6 +3,6 @@ test.db
 .pytest_cache
 __pycache__/
 .pyc
-
-
+venv
+static/images/
 
