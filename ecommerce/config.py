@@ -14,4 +14,5 @@ REDIS_DB = os.getenv('REDIS_DB', '0' if APP_ENV == 'TESTING' else '0')
 
 BASE_URL = os.getenv('BASE_URL', 'http://localhost:8000')
 
+
 BOT_TOKEN = os.getenv('BOT_TOKEN', '5029844586:AAEamXOIHkKBZa8UM3wbnoVNfqkX8XD78vk')
