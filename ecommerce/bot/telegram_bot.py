@@ -1,4 +1,4 @@
-# telegram_bot.py
+
 import logging
 
 from aiogram import Bot, Dispatcher, types
@@ -7,7 +7,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 from aiogram.utils import executor
 import random
 
-from ecommerce import config, redis_config
+from ecommerce import redis_config, config
 
 TOKEN = config.BOT_TOKEN
 bot = Bot(token=TOKEN)
@@ -17,6 +17,7 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(
                     level=logging.INFO,
                     # level=logging.DEBUG,  # Можно заменить на другой уровень логгирования.
                     )
+
 
 def get_contact_button():
     button = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -54,9 +55,9 @@ def generate_code():
     return ''.join(random.choice(number) for i in range(6))
 
 
-def run_bot():
+def start_bot():
     executor.start_polling(dp, skip_updates=True)
 
 
 if __name__ == '__main__':
-    run_bot()
+    start_bot()

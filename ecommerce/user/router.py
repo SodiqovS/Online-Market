@@ -16,6 +16,7 @@ from ecommerce.auth.jwt import get_current_user, get_current_admin
 from . import schema
 from . import services
 from .models import User
+from ..custom_page import CustomPage
 
 router = APIRouter(
     tags=['Users'],
@@ -54,10 +55,10 @@ async def edit_profile(request: schema.ProfileUpdate,
     return await services.edit_profile(request, current_user, database)
 
 
-@router.get('/', response_model=Page[schema.DisplayUser])
+@router.get('/', response_model=CustomPage[schema.DisplayUser])
 async def get_all_users(database: Session = Depends(db.get_db),
                         filters: FilterValues = Depends(create_filters_from_model(schema.DisplayUser)),
-                        current_admin: User = Depends(get_current_admin)) -> Page[schema.DisplayUser]:
+                        current_admin: User = Depends(get_current_admin)) -> CustomPage[schema.DisplayUser]:
     query = apply_filters(select(User), filters)
     return paginate(database, query)
 

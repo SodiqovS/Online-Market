@@ -1,6 +1,8 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from celery import Celery
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -14,6 +16,8 @@ from ecommerce.user import router as user_router
 
 from fastapi_pagination import add_pagination
 
+from ecommerce.bot.telegram_bot import start_bot
+
 description = """
 Ecommerce API
 
@@ -24,6 +28,7 @@ You will be able to:
 * **Create users** 
 * **Read users** 
 """
+
 
 app = FastAPI(
     title="EcommerceApp",
@@ -42,11 +47,10 @@ app = FastAPI(
 
 
 add_pagination(app)
-origin_server = "http://localhost"
-
-
-def check_origin(origin: str):
-    return origin == origin_server
+origins = [
+    "http://localhost",
+    "http://localhost:8000",
+]
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -58,6 +62,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# API Key Authentication
+API_KEY = "rYKcw1YebNjfxDkVVGkbxDjqCI5ZGRbAdCm4ctCN541QwdZSPBLHSSBva5wOdIgYyVfGbmt3RwtdyDawfAN4o3KMo8i7ubEHibeDB6M6jObgv69MHKTHBnK9c8to1wYn"
+
+
+@app.middleware("http")
+async def verify_api_key(request: Request, call_next):
+    api_key = request.headers.get("x-api-key")
+    if api_key != API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or missing API key",
+        )
+    response = await call_next(request)
+    return response
+
 
 app.include_router(auth_router.router)
 app.include_router(user_router.router)

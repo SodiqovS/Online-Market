@@ -14,6 +14,7 @@ from . import schema, services, validator
 from ecommerce.auth.jwt import get_current_admin
 from ecommerce.user.schema import User
 from .models import Product, Category
+from ..custom_page import CustomPage
 
 router = APIRouter(
     tags=['Products'],
@@ -116,7 +117,7 @@ async def upload_image(product_id: int, file: UploadFile = File(...),
     return image
 
 
-@router.get('/', response_model=Page[schema.Product])
+@router.get('/', response_model=CustomPage[schema.Product])
 async def get_all_products(database: Session = Depends(db.get_db),
                            filters: FilterValues = Depends(create_filters_from_model(schema.ProductBase))):
     query = apply_filters(select(Product), filters)
