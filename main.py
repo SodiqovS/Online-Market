@@ -1,10 +1,9 @@
-from contextlib import asynccontextmanager
-
 import uvicorn
 from celery import Celery
-from fastapi import FastAPI, Request, HTTPException, status, BackgroundTasks
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 from ecommerce import config
 from ecommerce.auth import router as auth_router
@@ -13,6 +12,8 @@ from ecommerce.cart import router as cart_router
 from ecommerce.orders import router as order_router
 from ecommerce.products import router as product_router
 from ecommerce.user import router as user_router
+from ecommerce.root import router as root_router
+
 
 from fastapi_pagination import add_pagination
 
@@ -69,11 +70,11 @@ API_KEY = "rYKcw1YebNjfxDkVVGkbxDjqCI5ZGRbAdCm4ctCN541QwdZSPBLHSSBva5wOdIgYyVfGb
 
 @app.middleware("http")
 async def verify_api_key(request: Request, call_next):
-    api_key = request.headers.get("x-api-key")
+    api_key = request.cookies.get("x-api-key")
     if api_key != API_KEY:
-        raise HTTPException(
+        return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid or missing API key",
+            content={"detail": "Invalid or missing API key"},
         )
     response = await call_next(request)
     return response
@@ -84,6 +85,7 @@ app.include_router(user_router.router)
 app.include_router(product_router.router)
 app.include_router(cart_router.router)
 app.include_router(order_router.router)
+app.include_router(root_router.router)
 
 celery = Celery(
     __name__,

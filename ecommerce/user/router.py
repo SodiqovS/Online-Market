@@ -1,5 +1,6 @@
 from typing import List
 
+from async_lru import alru_cache
 from faker import Faker
 from fastapi import APIRouter, Depends, status, Response, HTTPException
 
@@ -55,6 +56,7 @@ async def edit_profile(request: schema.ProfileUpdate,
     return await services.edit_profile(request, current_user, database)
 
 
+@alru_cache
 @router.get('/', response_model=CustomPage[schema.DisplayUser])
 async def get_all_users(database: Session = Depends(db.get_db),
                         filters: FilterValues = Depends(create_filters_from_model(schema.DisplayUser)),

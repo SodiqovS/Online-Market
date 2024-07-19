@@ -1,11 +1,12 @@
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, constr
 
 
-class Token(BaseModel):
-    token: str
-    token_type: str
+class TokenInfo(BaseModel):
+    access_token: str
+    refresh_token: Union[str, None] = None
+    token_type: str = "Bearer"
 
 
 class TokenData(BaseModel):

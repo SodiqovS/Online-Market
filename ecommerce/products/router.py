@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from async_lru import alru_cache
 from faker import Faker
 from fastapi import APIRouter, Depends, status, Response, HTTPException, UploadFile, File, Query
 from fastapi_filters import FilterValues, create_filters_from_model
@@ -117,6 +118,7 @@ async def upload_image(product_id: int, file: UploadFile = File(...),
     return image
 
 
+@alru_cache
 @router.get('/', response_model=CustomPage[schema.Product])
 async def get_all_products(database: Session = Depends(db.get_db),
                            filters: FilterValues = Depends(create_filters_from_model(schema.ProductBase))):

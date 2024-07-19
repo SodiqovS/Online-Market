@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from async_lru import alru_cache
 from sqlalchemy import desc, asc
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
@@ -15,6 +16,7 @@ async def create_new_category(request: schema.CategoryCreate, database: Session)
     return new_category
 
 
+@alru_cache
 async def get_all_categories(database: Session) -> List[models.Category]:
     categories = database.query(models.Category).all()
     return categories
@@ -63,6 +65,7 @@ async def get_product_by_id(product_id: int, database: Session) -> Optional[mode
     return product
 
 
+@alru_cache
 async def get_all_products(database: Session,
                            name: Optional[str] = None,
                            category_id: Optional[int] = None,

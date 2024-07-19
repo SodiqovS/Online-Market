@@ -1,18 +1,19 @@
-import os
-from dotenv import load_dotenv
-load_dotenv()
+from environs import Env
 
-APP_ENV = os.getenv('APP_ENV', 'development')
-DATABASE_USERNAME = os.getenv('DATABASE_USERNAME', 'sodiqovs')
-DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD', '1221')
-DATABASE_HOST = os.getenv('DATABASE_HOST', 'localhost')
-DATABASE_NAME = os.getenv('DATABASE_NAME', 'optomdb')
-TEST_DATABASE_NAME = os.getenv('DATABASE_NAME', 'test_optomdb')
-REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
-REDIS_PORT = os.getenv('REDIS_PORT', '6379')
-REDIS_DB = os.getenv('REDIS_DB', '0' if APP_ENV == 'TESTING' else '0')
+env = Env()
+env.read_env()
 
-BASE_URL = os.getenv('BASE_URL', 'http://localhost:8000')
+APP_ENV = env.str('APP_ENV', 'development')
+DATABASE_USERNAME = env.str('DATABASE_USERNAME', 'sodiqovs')
+DATABASE_PASSWORD = env.str('DATABASE_PASSWORD', '1221')
+DATABASE_HOST = env.str('DATABASE_HOST', 'localhost')
+DATABASE_NAME = env.str('DATABASE_NAME', 'optomdb')
+TEST_DATABASE_NAME = env.str('DATABASE_NAME', 'test_optomdb')
+REDIS_HOST = env.str('REDIS_HOST', '127.0.0.1')
+REDIS_PORT = env.str('REDIS_PORT', '6379')
+REDIS_DB = env.str('REDIS_DB', '0' if APP_ENV == 'TESTING' else '0')
+
+BASE_URL = env.str('BASE_URL', 'http://localhost:8000')
 
 
-BOT_TOKEN = os.getenv('BOT_TOKEN', '5029844586:AAEamXOIHkKBZa8UM3wbnoVNfqkX8XD78vk')
+BOT_TOKEN = env.str('BOT_TOKEN')

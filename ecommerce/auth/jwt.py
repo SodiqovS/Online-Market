@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
@@ -11,13 +11,24 @@ from ecommerce.user import models
 
 SECRET_KEY = "93ua)y!r#k$%0dcojl5u9xr$&9#@w(qh$=fyctcsbg(ms#+hyf"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 365
+ACCESS_TOKEN_EXPIRE_DAYS = 1
+REFRESH_TOKEN_EXPIRE_DAYS = 365
+ACCESS_TOKEN_TYPE = "access"
+REFRESH_TOKEN_TYPE = "refresh"
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta if expires_delta else timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS))
-    to_encode.update({"exp": expire, "token_type": "Bearer"})
+    to_encode.update({"exp": expire, "token_type": ACCESS_TOKEN_TYPE})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def create_refresh_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta if expires_delta else timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
+    to_encode.update({"exp": expire, "token_type": REFRESH_TOKEN_TYPE})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -25,6 +36,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 def verify_token(token: str, credentials_exception):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
         phone_number: str = payload.get("sub")
         token_type: str = payload.get("token_type")
         if phone_number is None:
@@ -35,16 +47,24 @@ def verify_token(token: str, credentials_exception):
         raise credentials_exception
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = HTTPBearer()
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(token: HTTPAuthorizationCredentials = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    token_data = verify_token(token, credentials_exception)
+    print(token.credentials)
+    token_data = verify_token(token.credentials, credentials_exception)
+    token_type = token_data.token_type
+    print(token_type)
+    if token_type != ACCESS_TOKEN_TYPE:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token type {token_type!r} expected {ACCESS_TOKEN_TYPE!r}",
+        )
     user = db.query(models.User).filter(models.User.phone_number == token_data.phone_number).first()
     if user is None:
         raise credentials_exception
@@ -58,3 +78,23 @@ def get_current_admin(current_user: models.User = Depends(get_current_user)):
             detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+def get_auth_user_by_refresh_token(token: HTTPAuthorizationCredentials = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    token_data = verify_token(token.credentials, credentials_exception)
+    token_type = token_data.token_type
+    if token_type != REFRESH_TOKEN_TYPE:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token type {token_type!r} expected {ACCESS_TOKEN_TYPE!r}",
+        )
+    user = db.query(models.User).filter(models.User.phone_number == token_data.phone_number).first()
+    if user is None:
+        raise credentials_exception
+    return user
