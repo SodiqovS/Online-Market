@@ -10,7 +10,7 @@ from fastapi_filters.ext.sqlalchemy import apply_filters
 from fastapi_filters import create_filters, create_filters_from_model, FilterValues
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import  AsyncSession
 
 from ecommerce import db
 from ecommerce.auth.jwt import get_current_user, get_current_admin
@@ -27,7 +27,7 @@ router = APIRouter(
 
 #
 # @router.get('/fake')
-# async def fake_data(database: Session = Depends(db.get_db)):
+# async def fake_data(database: AsyncSession = Depends(db.get_db)):
 #     fake = Faker()
 #     for _ in range(100):
 #         user = User(
@@ -52,13 +52,13 @@ async def get_profile(current_user: User = Depends(get_current_user)):
 @router.patch('/profile')
 async def edit_profile(request: schema.ProfileUpdate,
                        current_user: User = Depends(get_current_user),
-                       database: Session = Depends(db.get_db)):
+                       database: AsyncSession = Depends(db.get_db)):
     return await services.edit_profile(request, current_user, database)
 
 
 @alru_cache
 @router.get('/', response_model=CustomPage[schema.DisplayUser])
-async def get_all_users(database: Session = Depends(db.get_db),
+async def get_all_users(database: AsyncSession = Depends(db.get_db),
                         filters: FilterValues = Depends(create_filters_from_model(schema.DisplayUser)),
                         current_admin: User = Depends(get_current_admin)) -> CustomPage[schema.DisplayUser]:
     query = apply_filters(select(User), filters)
@@ -66,19 +66,19 @@ async def get_all_users(database: Session = Depends(db.get_db),
 
 
 @router.get('/{user_id}', response_model=schema.DisplayUser)
-async def get_user_by_id(user_id: int, database: Session = Depends(db.get_db),
+async def get_user_by_id(user_id: int, database: AsyncSession = Depends(db.get_db),
                          current_admin: User = Depends(get_current_admin)):
     return await services.get_user_by_id(user_id, database)
 
 
 @router.patch('/{user_id}')
 async def get_user_by_id(user_id: int, request: schema.UserUpdate,
-                         database: Session = Depends(db.get_db),
+                         database: AsyncSession = Depends(db.get_db),
                          current_admin: User = Depends(get_current_admin)):
     return await services.update_user_by_id(user_id, request, database)
 
 
 @router.delete('/{user_id}', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
-async def delete_user_by_id(user_id: int, database: Session = Depends(db.get_db),
+async def delete_user_by_id(user_id: int, database: AsyncSession = Depends(db.get_db),
                             current_admin: User = Depends(get_current_admin)):
     return await services.delete_user_by_id(user_id, database)

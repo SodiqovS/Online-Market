@@ -1,9 +1,9 @@
 from typing import Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import  AsyncSession
 
 from .models import Category
 
 
-async def verify_category_exist(category_id: int, db_session: Session) -> Optional[Category]:
+async def verify_category_exist(category_id: int, db_session: AsyncSession) -> Optional[Category]:
     return db_session.query(Category).filter(Category.id == category_id).first()

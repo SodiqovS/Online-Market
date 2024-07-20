@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, Depends, status
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import  AsyncSession
 from . import schema
 from ecommerce.bot.telegram_bot import bot
 from ecommerce import db, redis_config
@@ -18,7 +18,7 @@ router = APIRouter(
 
 
 @router.post('/login')
-async def login(auth_code: schema.AuthCode, database: Session = Depends(db.get_db)):
+async def login(auth_code: schema.AuthCode, database: AsyncSession = Depends(db.get_db)):
     code = auth_code.code
     telegram_id = redis_config.redis_client.get(code)
     if not telegram_id:
@@ -27,7 +27,7 @@ async def login(auth_code: schema.AuthCode, database: Session = Depends(db.get_d
     phone_number = redis_config.redis_client.get(telegram_id)
     data = await bot.get_chat(telegram_id)
 
-    user = database.query(User).filter(User.telegram_id == telegram_id).first()
+    user = await database.execute(User).filter(User.telegram_id == telegram_id).first()
 
     if not user:
         # Foydalanuvchi topilmasa, yangi foydalanuvchi yaratish

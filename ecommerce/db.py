@@ -1,26 +1,30 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
-from . import config
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase
+
+from ecommerce import config
 
 DATABASE_USERNAME = config.DATABASE_USERNAME
 DATABASE_PASSWORD = config.DATABASE_PASSWORD
 DATABASE_HOST = config.DATABASE_HOST
 DATABASE_NAME = config.DATABASE_NAME
 
-SQLALCHEMY_DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
+DATABASE_URL = f"postgresql+asyncpg://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
+engine = create_async_engine(DATABASE_URL)
+SessionLocal = async_sessionmaker(bind=engine)
 
 
-def get_db():
+class Base(DeclarativeBase):
+    pass
+
+
+async def get_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()
+        await db.close()

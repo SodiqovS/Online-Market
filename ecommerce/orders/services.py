@@ -1,19 +1,19 @@
 from typing import List
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import  AsyncSession
 
 from ecommerce.cart.models import Cart, CartItems
 from ecommerce.orders.models import Order, OrderDetails
 
 
-async def initiate_order(current_user, database: Session) -> Order:
-    cart = database.query(Cart).filter(Cart.user_id == current_user.id).first()
+async def initiate_order(current_user, database: AsyncSession) -> Order:
+    cart = await database.execute(Cart).filter(Cart.user_id == current_user.id).first()
 
     if not cart:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No Cart found for current user!")
 
-    cart_items_objects = database.query(CartItems).filter(CartItems.cart_id == cart.id).all()
+    cart_items_objects = await database.execute(CartItems).filter(CartItems.cart_id == cart.id).all()
     if not cart_items_objects:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No Items found in Cart!")
 
@@ -47,19 +47,19 @@ async def initiate_order(current_user, database: Session) -> Order:
     database.commit()
 
     # Savatdagi mahsulotlarni tozalash
-    database.query(CartItems).filter(CartItems.cart_id == cart.id).delete()
+    await database.execute(CartItems).filter(CartItems.cart_id == cart.id).delete()
     database.commit()
 
     return new_order
 
 
 async def get_order_listing(current_user, database) -> List[Order]:
-    orders = database.query(Order).filter(Order.customer_id == current_user.id).all()
+    orders = await database.execute(Order).filter(Order.customer_id == current_user.id).all()
     return orders
 
 
 async def get_all_orders(database) -> List[Order]:
-    orders = database.query(Order).all()
+    orders = await database.execute(Order).all()
     return orders
 
 

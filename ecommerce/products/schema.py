@@ -14,12 +14,21 @@ class CategoryBase(BaseModel):
     name: str
 
 
+class ProductBase(BaseModel):
+    name: str
+    quantity: int
+    description: str
+    price: float
+    category_id: int
+
+
 class CategoryCreate(CategoryBase):
     pass
 
 
 class Category(CategoryBase):
     id: int
+    product: ProductBase
 
     class Config:
         from_attributes = True
@@ -31,14 +40,6 @@ class ListCategory(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-class ProductBase(BaseModel):
-    name: str
-    quantity: int
-    description: str
-    price: float
-    category_id: int
 
 
 class ProductCreate(ProductBase):

@@ -2,13 +2,13 @@ from typing import List, Optional
 
 from async_lru import alru_cache
 from sqlalchemy import desc, asc
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import  AsyncSession
 from fastapi import HTTPException, status
 
 from . import models, schema
 
 
-async def create_new_category(request: schema.CategoryCreate, database: Session) -> models.Category:
+async def create_new_category(request: schema.CategoryCreate, database: AsyncSession) -> models.Category:
     new_category = models.Category(name=request.name)
     database.add(new_category)
     database.commit()
@@ -17,24 +17,24 @@ async def create_new_category(request: schema.CategoryCreate, database: Session)
 
 
 @alru_cache
-async def get_all_categories(database: Session) -> List[models.Category]:
-    categories = database.query(models.Category).all()
+async def get_all_categories(database: AsyncSession) -> List[models.Category]:
+    categories = await database.execute(models.Category).all()
     return categories
 
 
-async def get_category_by_id(category_id: int, database: Session) -> models.Category:
-    category_info = database.query(models.Category).filter(models.Category.id == category_id).first()
+async def get_category_by_id(category_id: int, database: AsyncSession) -> models.Category:
+    category_info = await database.execute(models.Category).filter(models.Category.id == category_id).first()
     if not category_info:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data Not Found!")
     return category_info
 
 
-async def delete_category_by_id(category_id: int, database: Session):
-    database.query(models.Category).filter(models.Category.id == category_id).delete()
+async def delete_category_by_id(category_id: int, database: AsyncSession):
+    await database.execute(models.Category).filter(models.Category.id == category_id).delete()
     database.commit()
 
 
-async def create_new_product(request: schema.ProductCreate, database: Session) -> models.Product:
+async def create_new_product(request: schema.ProductCreate, database: AsyncSession) -> models.Product:
     new_product = models.Product(
         name=request.name,
         quantity=request.quantity,
@@ -50,7 +50,7 @@ async def create_new_product(request: schema.ProductCreate, database: Session) -
     return new_product
 
 
-async def create_new_image(product_id: int, image_url: str, database: Session) -> models.Image:
+async def create_new_image(product_id: int, image_url: str, database: AsyncSession) -> models.Image:
     new_image = models.Image(product_id=product_id, url=image_url)
     database.add(new_image)
     database.commit()
@@ -58,15 +58,15 @@ async def create_new_image(product_id: int, image_url: str, database: Session) -
     return new_image
 
 
-async def get_product_by_id(product_id: int, database: Session) -> Optional[models.Product]:
-    product = database.query(models.Product).filter(models.Product.id == product_id).first()
+async def get_product_by_id(product_id: int, database: AsyncSession) -> Optional[models.Product]:
+    product = await database.execute(models.Product).filter(models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     return product
 
 
 @alru_cache
-async def get_all_products(database: Session,
+async def get_all_products(database: AsyncSession,
                            name: Optional[str] = None,
                            category_id: Optional[int] = None,
                            min_price: Optional[float] = None,
@@ -75,7 +75,7 @@ async def get_all_products(database: Session,
                            order_direction: Optional[str] = 'asc',
                            limit: int = 10,
                            skip: int = 0):
-    query = database.query(models.Product)
+    query = await database.execute(models.Product)
 
     if name:
         query = query.filter(models.Product.name.ilike(f"%{name}%"))
@@ -106,8 +106,8 @@ async def get_all_products(database: Session,
     }
 
 
-async def update_product(product_id: int, request, database: Session) -> models.Product:
-    product = database.query(models.Product).filter(models.Product.id == product_id).first()
+async def update_product(product_id: int, request, database: AsyncSession) -> models.Product:
+    product = await database.execute(models.Product).filter(models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
@@ -127,8 +127,8 @@ async def update_product(product_id: int, request, database: Session) -> models.
     return product
 
 
-async def delete_product(product_id: int, database: Session):
-    product = database.query(models.Product).filter(models.Product.id == product_id).first()
+async def delete_product(product_id: int, database: AsyncSession):
+    product = await database.execute(models.Product).filter(models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     database.delete(product)

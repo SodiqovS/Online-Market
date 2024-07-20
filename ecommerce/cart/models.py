@@ -1,30 +1,36 @@
 from datetime import datetime
-
-from sqlalchemy import Column, Integer, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
-
+from typing import List
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 from ecommerce.db import Base
 from ecommerce.products.models import Product
-from ecommerce.user.models import User
 
 
 class Cart(Base):
     __tablename__ = "cart"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey(User.id, ondelete="CASCADE"), )
-    cart_items = relationship("CartItems", back_populates="cart")
-    user_cart = relationship("User", back_populates="cart")
-    created_date = Column(DateTime, default=datetime.now)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    created_date: Mapped[datetime] = mapped_column(default=datetime.now)
+
+    user_cart: Mapped["User"] = relationship("User", back_populates="cart", lazy="select")
+    cart_items: Mapped[List["CartItems"]] = relationship("CartItems", back_populates="cart", lazy="select")
+
+    def __repr__(self) -> str:
+        return f"<Cart(id={self.id}, user_id={self.user_id})>"
 
 
 class CartItems(Base):
     __tablename__ = "cart_items"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    cart_id = Column(Integer, ForeignKey("cart.id", ondelete="CASCADE"), )
-    product_id = Column(Integer, ForeignKey(Product.id, ondelete="CASCADE"), )
-    quantity = Column(Integer, default=1)
-    cart = relationship("Cart", back_populates="cart_items")
-    products = relationship("Product", back_populates="cart_items")
-    created_date = Column(DateTime, default=datetime.now)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    cart_id: Mapped[int] = mapped_column(ForeignKey("cart.id", ondelete="CASCADE"))
+    product_id: Mapped[int] = mapped_column(ForeignKey(Product.id, ondelete="CASCADE"))
+    quantity: Mapped[int] = mapped_column(default=1)
+    created_date: Mapped[datetime] = mapped_column(default=datetime.now)
+
+    cart: Mapped["Cart"] = relationship("Cart", back_populates="cart_items")
+    product: Mapped["Product"] = relationship("Product")
+
+    def __repr__(self) -> str:
+        return f"<CartItems(id={self.id})>"

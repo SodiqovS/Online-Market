@@ -1,30 +1,30 @@
 from typing import List, Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import  AsyncSession
 
 from . import models, schema
 from .models import User
 
 
 async def all_users(database) -> List[models.User]:
-    users = database.query(models.User).all()
+    users = await database.execute(models.User).all()
     return users
 
 
 async def get_user_by_id(user_id, database) -> Optional[models.User]:
-    user_info = database.query(models.User).get(user_id)
+    user_info = await database.execute(models.User).get(user_id)
     if not user_info:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data Not Found !")
     return user_info
 
 
 async def delete_user_by_id(user_id, database):
-    database.query(models.User).filter(models.User.id == user_id).delete()
+    await database.execute(models.User).filter(models.User.id == user_id).delete()
     database.commit()
 
 
-async def edit_profile(request: schema.ProfileUpdate, current_user: User, database: Session):
+async def edit_profile(request: schema.ProfileUpdate, current_user: User, database: AsyncSession):
 
     if not current_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

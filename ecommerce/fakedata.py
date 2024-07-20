@@ -1,7 +1,7 @@
 
 from faker import Faker
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import  AsyncSession
 
 from ecommerce import db
 from ecommerce.products.models import Category, Product

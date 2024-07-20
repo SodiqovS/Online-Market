@@ -1,1 +1,0 @@
-from ecommerce.cart.models import CartItems

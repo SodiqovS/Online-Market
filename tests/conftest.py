@@ -16,5 +16,5 @@ def create_dummy_user(tmpdir):
     yield  # this is where the testing happens
 
     # Teardown : fill with any logic you want
-    database.query(User).filter(User.email == 'john@gmail.com').delete()
+    await database.execute(User).filter(User.email == 'john@gmail.com').delete()
     database.commit()
