@@ -2,13 +2,12 @@ from typing import List, Optional
 
 from async_lru import alru_cache
 from faker import Faker
-from fastapi import APIRouter, Depends, status, Response, HTTPException, UploadFile, File, Query
-from fastapi_filters import FilterValues, create_filters_from_model
-from fastapi_filters.ext.sqlalchemy import apply_filters
+from fastapi import APIRouter, Depends, status, Response, HTTPException, UploadFile, File, Form
+from fastapi.params import Query
+
 from fastapi_pagination.ext.sqlalchemy import paginate
-from fastapi_pagination.links import Page
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import  AsyncSession
+from sqlalchemy import select, or_
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ecommerce import db
 from . import schema, services, validator
@@ -22,16 +21,16 @@ router = APIRouter(
     prefix='/products'
 )
 
-#
-# @router.get('/category/fake')
-# async def fake_category(database: AsyncSession = Depends(db.get_db)):
-#     fake = Faker()
-#     for _ in range(10):
-#         new_category = Category(name=fake.name())
-#         database.add(new_category)
-#         database.commit()
-#         database.refresh(new_category)
-#     return {'message': 'Category fake data'}
+
+@router.get('/category/fake')
+async def fake_category(database: AsyncSession = Depends(db.get_db)):
+    fake = Faker()
+    for _ in range(10):
+        new_category = Category(name=fake.name())
+        database.add(new_category)
+        await database.commit()
+        await database.refresh(new_category)
+    return {'message': 'Category fake data'}
 
 
 @router.post('/category', status_code=status.HTTP_201_CREATED)
@@ -52,78 +51,95 @@ async def get_category_by_id(category_id: int, database: AsyncSession = Depends(
     return await services.get_category_by_id(category_id, database)
 
 
-@router.delete('/category/{category_id}', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
+@router.delete('/category/{category_id}')
 async def delete_category_by_id(category_id: int,
                                 database: AsyncSession = Depends(db.get_db),
                                 current_admin: User = Depends(get_current_admin)):
     await services.delete_category_by_id(category_id, database)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return {'message': 'Category deleted'}
 
 
-# @router.get('/fake')
-# async def fake_products(database: AsyncSession = Depends(db.get_db)):
-#     fake = Faker()
-#     for _ in range(100):
-#         new_product = Product(
-#             name=fake.name(),
-#             quantity=fake.random_int(100, 1000),
-#             description=fake.text(max_nb_chars=1000, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
-#             price=fake.random_int(1000, 10000000),
-#             category_id=fake.random_int(1, 11),
-#         )
-#         database.add(new_product)
-#         database.commit()
-#         database.refresh(new_product)
-#
-#     return {'message': 'Fake successfully'}
-#
+@router.get('/fake')
+async def fake_products(database: AsyncSession = Depends(db.get_db)):
+    fake = Faker()
+    for _ in range(100):
+        new_product = Product(
+            name=fake.name(),
+            quantity=fake.random_int(100, 1000),
+            description=fake.text(max_nb_chars=1000, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
+            price=fake.random_int(1000, 10000000),
+            category_id=fake.random_int(1, 10),
+        )
+        database.add(new_product)
+        await database.commit()
+        await database.refresh(new_product)
+
+    return {'message': 'Fake successfully'}
+
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=schema.Product)
-async def create_product(request: schema.ProductCreate, database: AsyncSession = Depends(db.get_db),
+async def create_product(name: str = Form(...),
+                         quantity: int = Form(...),
+                         description: str = Form(...),
+                         price: int = Form(...),
+                         category_id: int = Form(...),
+                         images: List[UploadFile] = File(...),
+                         database: AsyncSession = Depends(db.get_db),
                          current_admin: User = Depends(get_current_admin)):
-    category = await validator.verify_category_exist(request.category_id, database)
+    category = await validator.verify_category_exist(category_id, database)
     if not category:
         raise HTTPException(
             status_code=400,
             detail="You have provided an invalid category ID.",
         )
 
-    product = await services.create_new_product(request, database)
+    product = await services.create_product(name, quantity, description, price, category_id, images, database)
+
     return product
 
 
 @router.get('/{product_id}', response_model=schema.Product)
 async def get_product_by_id(product_id: int, database: AsyncSession = Depends(db.get_db)):
-    product = await services.get_product_by_id(product_id, database)
-    if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found"
-        )
-    return product
-
-
-@router.post('/upload/{product_id}', status_code=status.HTTP_201_CREATED)
-async def upload_image(product_id: int, file: UploadFile = File(...),
-                       current_admin: User = Depends(get_current_admin),
-                       database: AsyncSession = Depends(db.get_db)):
-    # Faylni server yoki saqlash xizmati ichida saqlash
-    file_location = f"static/images/{file.filename}"
-    with open(file_location, "wb+") as file_object:
-        file_object.write(file.file.read())
-
-    # Fayl URL manzilini bazaga qo'shish
-    image_url = f"/static/images/{file.filename}"
-    image = await services.create_new_image(product_id, image_url, database)
-    return image
+    return await services.get_product_by_id(product_id, database)
 
 
 @alru_cache
 @router.get('/', response_model=CustomPage[schema.Product])
-async def get_all_products(database: AsyncSession = Depends(db.get_db),
-                           filters: FilterValues = Depends(create_filters_from_model(schema.ProductBase))):
-    query = apply_filters(select(Product), filters)
-    return paginate(database, query)
+async def get_all_products(s: Optional[str] = None,
+                           categories: Optional[List[int]] = Query(default=[]),
+                           sort_by: Optional[str] = 'id',
+                           sort_order: Optional[str] = 'desc',
+                           database: AsyncSession = Depends(db.get_db)):
+    query = select(Product)
+
+    # Search filter
+    if s:
+        search_filter = or_(
+            Product.name.ilike(f"%{s}%"),
+            Product.description.ilike(f"%{s}%")
+        )
+        query = query.where(search_filter)
+
+    # Categories filter
+    if categories:
+        query = query.where(Product.category_id.in_(categories))
+
+    # Sorting
+    sort_order_func = {
+        'asc': lambda col: col.asc(),
+        'desc': lambda col: col.desc()
+    }
+
+    sort_columns = {
+        'id': Product.id,
+        'name': Product.name,
+        'price': Product.price
+    }
+
+    if sort_by in sort_columns and sort_order in sort_order_func:
+        query = query.order_by(sort_order_func[sort_order](sort_columns[sort_by]))
+
+    return await paginate(database, query)
 
 
 @router.patch('/{product_id}', response_model=schema.Product)

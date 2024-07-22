@@ -17,3 +17,5 @@ BASE_URL = env.str('BASE_URL', 'http://localhost:8000')
 
 
 BOT_TOKEN = env.str('BOT_TOKEN')
+
+XAPIKEY = env.str('XAPIKEY')

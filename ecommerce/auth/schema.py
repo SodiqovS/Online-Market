@@ -11,6 +11,7 @@ class TokenInfo(BaseModel):
 
 class TokenData(BaseModel):
     phone_number: Optional[str] = None
+    user_id: Optional[int] = None
     token_type: Optional[str] = None
 
 

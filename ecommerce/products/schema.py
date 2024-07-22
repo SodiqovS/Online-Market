@@ -18,7 +18,7 @@ class ProductBase(BaseModel):
     name: str
     quantity: int
     description: str
-    price: float
+    price: int
     category_id: int
 
 
@@ -28,7 +28,6 @@ class CategoryCreate(CategoryBase):
 
 class Category(CategoryBase):
     id: int
-    product: ProductBase
 
     class Config:
         from_attributes = True

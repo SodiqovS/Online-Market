@@ -1,31 +1,32 @@
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import  AsyncSession
+from sqlalchemy import select, delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from . import models, schema
-from .models import User
 
 
-async def all_users(database) -> List[models.User]:
-    users = await database.execute(models.User).all()
-    return users
+async def all_users(database: AsyncSession):
+    result = await database.execute(select(models.User))
+    return result.all()
 
 
 async def get_user_by_id(user_id, database) -> Optional[models.User]:
-    user_info = await database.execute(models.User).get(user_id)
+    result = await database.execute(select(models.User).filter(models.User.id == user_id))
+    user_info = result.scalars().first()
     if not user_info:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data Not Found !")
     return user_info
 
 
-async def delete_user_by_id(user_id, database):
-    await database.execute(models.User).filter(models.User.id == user_id).delete()
-    database.commit()
+async def delete_user_by_id(user_id, database: AsyncSession):
+    await database.execute(delete(models.User).filter(models.User.id == user_id))
+    await database.commit()
+    return {"message": f"<User{user_id}> Deleted Successfully"}
 
 
-async def edit_profile(request: schema.ProfileUpdate, current_user: User, database: AsyncSession):
-
+async def edit_profile(request: schema.ProfileUpdate, current_user: models.User, database: AsyncSession):
     if not current_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -36,13 +37,13 @@ async def edit_profile(request: schema.ProfileUpdate, current_user: User, databa
     if request.address is not None:
         current_user.address = request.address
 
-    database.commit()
-    database.refresh(current_user)
+    await database.commit()
+    await database.refresh(current_user)
 
     return {"message": "Profile Updated Successfully"}
 
 
-async def update_user_by_id(user_id, request, database):
+async def update_user_by_id(user_id, request, database: AsyncSession):
     user = await get_user_by_id(user_id, database)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
@@ -52,6 +53,6 @@ async def update_user_by_id(user_id, request, database):
     if request.is_admin is not None:
         user.is_admin = request.is_admin
 
-    database.commit()
-    database.refresh(user)
+    await database.commit()
+    await database.refresh(user)
     return {"message": "User Updated Successfully"}

@@ -18,8 +18,6 @@ from ecommerce.root import router as root_router
 
 from fastapi_pagination import add_pagination
 
-from ecommerce.bot.telegram_bot import start_bot
-
 description = """
 Ecommerce API
 
@@ -66,7 +64,7 @@ app.add_middleware(
 )
 
 # API Key Authentication
-API_KEY = "rYKcw1YebNjfxDkVVGkbxDjqCI5ZGRbAdCm4ctCN541QwdZSPBLHSSBva5wOdIgYyVfGbmt3RwtdyDawfAN4o3KMo8i7ubEHibeDB6M6jObgv69MHKTHBnK9c8to1wYn"
+API_KEY = config.XAPIKEY
 
 
 @app.middleware("http")

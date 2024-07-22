@@ -12,7 +12,7 @@ class Category(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
 
-    products: Mapped[List["Product"]] = relationship("Product", back_populates="category", lazy="select")
+    products: Mapped[List["Product"]] = relationship("Product", back_populates="category", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Category(id={self.id}, name={self.name})>"
@@ -25,7 +25,7 @@ class Image(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
     url: Mapped[str] = mapped_column(nullable=False)
 
-    product: Mapped["Product"] = relationship("Product", back_populates="images", lazy="select")
+    product: Mapped["Product"] = relationship("Product", back_populates="images")
 
     def __repr__(self) -> str:
         return f"<Image(id={self.id}, url={self.url})>"
@@ -34,15 +34,15 @@ class Image(Base):
 class Product(Base):
     __tablename__ = "products"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)
     price: Mapped[int] = mapped_column(Integer, nullable=False)
     category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
 
-    category: Mapped["Category"] = relationship("Category", back_populates="products", lazy="select")
-    images: Mapped[List["Image"]] = relationship("Image", back_populates="product", lazy="select")
+    category: Mapped["Category"] = relationship("Category", back_populates="products")
+    images: Mapped[List["Image"]] = relationship("Image", back_populates="product")
 
     def __repr__(self) -> str:
         return f"<Product(id={self.id}, name={self.name}, category_id={self.category_id})>"

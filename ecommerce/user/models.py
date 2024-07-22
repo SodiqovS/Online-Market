@@ -11,13 +11,14 @@ from ecommerce.orders.models import Order
 
 class User(Base):
     __tablename__ = 'users'
-    id: Mapped[int] = mapped_column(primary_key=True, auto_increment=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     first_name: Mapped[str] = mapped_column()
     last_name: Mapped[str] = mapped_column(nullable=True)
     phone_number: Mapped[str] = mapped_column(unique=True)
+    telegram_id: Mapped[str] = mapped_column(unique=True)
     username: Mapped[str] = mapped_column(unique=True, nullable=True)
     address: Mapped[str] = mapped_column(nullable=True)
-    create_date: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
     is_admin: Mapped[bool] = mapped_column(default=False)
 
     orders: Mapped[List[Order]] = relationship()

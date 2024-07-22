@@ -1,113 +1,106 @@
-from typing import List, Optional
-
 from async_lru import alru_cache
-from sqlalchemy import desc, asc
-from sqlalchemy.ext.asyncio import  AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
+from sqlalchemy.orm import joinedload
 
 from . import models, schema
+from .models import Category
 
 
 async def create_new_category(request: schema.CategoryCreate, database: AsyncSession) -> models.Category:
     new_category = models.Category(name=request.name)
     database.add(new_category)
-    database.commit()
-    database.refresh(new_category)
+    await database.commit()
+    await database.refresh(new_category)
     return new_category
 
 
 @alru_cache
-async def get_all_categories(database: AsyncSession) -> List[models.Category]:
-    categories = await database.execute(models.Category).all()
+async def get_all_categories(database: AsyncSession):
+    result = await database.execute(select(models.Category.id, models.Category.name))
+    categories = result.all()
     return categories
 
 
-async def get_category_by_id(category_id: int, database: AsyncSession) -> models.Category:
-    category_info = await database.execute(models.Category).filter(models.Category.id == category_id).first()
+async def get_category_by_id(category_id: int, database: AsyncSession):
+    category_info = await database.get(Category, category_id)
     if not category_info:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data Not Found!")
     return category_info
 
 
 async def delete_category_by_id(category_id: int, database: AsyncSession):
-    await database.execute(models.Category).filter(models.Category.id == category_id).delete()
-    database.commit()
+    category = await database.get(Category, category_id)
+    if category:
+        await database.delete(category)
+        await database.commit()
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data Not Found!")
 
 
-async def create_new_product(request: schema.ProductCreate, database: AsyncSession) -> models.Product:
-    new_product = models.Product(
-        name=request.name,
-        quantity=request.quantity,
-        description=request.description,
-        price=request.price,
-        category_id=request.category_id
+async def create_product(name, quantity, description, price, category_id, images, database):
+    product = models.Product(
+        name=name,
+        quantity=quantity,
+        description=description,
+        price=price,
+        category_id=category_id
     )
-    database.add(new_product)
-    database.commit()
-    database.refresh(new_product)
+    database.add(product)
+    await database.commit()
+    await database.refresh(product)
+    await database.flush()
 
-    database.commit()
-    return new_product
+    ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/gif"]
+    MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+    # Validate image formats and size
+    for image in images:
+        if image.content_type not in ALLOWED_IMAGE_FORMATS:
+            raise HTTPException(status_code=400, detail=f"Invalid image format: {image.content_type}")
+
+        contents = await image.read()
+        if len(contents) > MAX_IMAGE_SIZE:
+            raise HTTPException(status_code=400, detail=f"Image size exceeds 10 MB: {image.filename}")
+
+    # Reset the image read pointer
+    for image in images:
+        await image.seek(0)
+
+    for image in images:
+        file_location = f"static/images/{image.filename}"
+        with open(file_location, "wb+") as file_object:
+            file_object.write(image.file.read())
+
+        # Fayl URL manzilini bazaga qo'shish
+        image_url = f"/static/images/{image.filename}"
+
+        new_image = models.Image(product_id=product.id, url=image_url)
+        database.add(new_image)
+
+    await database.commit()
+    await database.refresh(product, attribute_names=['images', 'category'])
+
+    return product
 
 
-async def create_new_image(product_id: int, image_url: str, database: AsyncSession) -> models.Image:
-    new_image = models.Image(product_id=product_id, url=image_url)
-    database.add(new_image)
-    database.commit()
-    database.refresh(new_image)
-    return new_image
+async def get_product_by_id(product_id: int, database: AsyncSession):
+    query = select(models.Product).options(
+        joinedload(models.Product.images),
+        joinedload(models.Product.category)
+    ).where(models.Product.id == product_id)
 
+    result = await database.execute(query)
+    product = result.scalar()
 
-async def get_product_by_id(product_id: int, database: AsyncSession) -> Optional[models.Product]:
-    product = await database.execute(models.Product).filter(models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     return product
 
 
-@alru_cache
-async def get_all_products(database: AsyncSession,
-                           name: Optional[str] = None,
-                           category_id: Optional[int] = None,
-                           min_price: Optional[float] = None,
-                           max_price: Optional[float] = None,
-                           order_by: Optional[str] = 'id',
-                           order_direction: Optional[str] = 'asc',
-                           limit: int = 10,
-                           skip: int = 0):
-    query = await database.execute(models.Product)
-
-    if name:
-        query = query.filter(models.Product.name.ilike(f"%{name}%"))
-    if category_id:
-        query = query.filter(models.Product.category_id == category_id)
-    if min_price:
-        query = query.filter(models.Product.price >= min_price)
-    if max_price:
-        query = query.filter(models.Product.price <= max_price)
-
-    total_products = query.count()
-
-    if order_by:
-        if order_direction == 'desc':
-            query = query.order_by(desc(getattr(models.Product, order_by)))
-        else:
-            query = query.order_by(asc(getattr(models.Product, order_by)))
-
-    products = query.offset(skip).limit(limit).all()
-    total_pages = (total_products // limit) + (1 if total_products % limit > 0 else 0)
-    current_page = (skip // limit) + 1
-
-    return {
-        "products": products,
-        "total_products": total_products,
-        "total_pages": total_pages,
-        "current_page": current_page
-    }
-
-
-async def update_product(product_id: int, request, database: AsyncSession) -> models.Product:
-    product = await database.execute(models.Product).filter(models.Product.id == product_id).first()
+async def update_product(product_id: int, request, database: AsyncSession):
+    product = database.get(models.Product, product_id)
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
@@ -122,14 +115,14 @@ async def update_product(product_id: int, request, database: AsyncSession) -> mo
     if request.category_id is not None:
         product.category_id = request.category_id
 
-    database.commit()
-    database.refresh(product)
+    await database.commit()
+    await database.refresh(product)
     return product
 
 
 async def delete_product(product_id: int, database: AsyncSession):
-    product = await database.execute(models.Product).filter(models.Product.id == product_id).first()
+    product = await database.get(models.Product, product_id)
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
-    database.delete(product)
-    database.commit()
+    await database.delete(product)
+    await database.commit()
