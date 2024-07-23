@@ -26,7 +26,7 @@ router = APIRouter(
 async def fake_category(database: AsyncSession = Depends(db.get_db)):
     fake = Faker()
     for _ in range(10):
-        new_category = Category(name=fake.name())
+        new_category = Category(name=fake.name(), image_url=fake.url())
         database.add(new_category)
         await database.commit()
         await database.refresh(new_category)
@@ -34,10 +34,11 @@ async def fake_category(database: AsyncSession = Depends(db.get_db)):
 
 
 @router.post('/category', status_code=status.HTTP_201_CREATED)
-async def create_category(request: schema.CategoryCreate,
+async def create_category(name: str = Form(...),
+                          image: UploadFile = File(...),
                           database: AsyncSession = Depends(db.get_db),
                           current_admin: User = Depends(get_current_admin)):
-    new_category = await services.create_new_category(request, database)
+    new_category = await services.create_new_category(name, image, database)
     return new_category
 
 
@@ -66,9 +67,9 @@ async def fake_products(database: AsyncSession = Depends(db.get_db)):
         new_product = Product(
             name=fake.name(),
             quantity=fake.random_int(100, 1000),
-            description=fake.text(max_nb_chars=1000, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
+            description=fake.text(max_nb_chars=100, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
             price=fake.random_int(1000, 10000000),
-            category_id=fake.random_int(1, 10),
+            category_id=fake.random_int(12, 21),
         )
         database.add(new_product)
         await database.commit()

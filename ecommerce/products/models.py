@@ -11,6 +11,7 @@ class Category(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
+    image_url: Mapped[str] = mapped_column(nullable=False)
 
     products: Mapped[List["Product"]] = relationship("Product", back_populates="category", cascade="all, delete-orphan")
 

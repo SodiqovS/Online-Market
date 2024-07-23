@@ -23,7 +23,7 @@ class ProductBase(BaseModel):
 
 
 class CategoryCreate(CategoryBase):
-    pass
+    image_url: str
 
 
 class Category(CategoryBase):

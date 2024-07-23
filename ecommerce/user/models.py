@@ -1,7 +1,7 @@
 import datetime
 from typing import List
 
-from sqlalchemy import func
+from sqlalchemy import func, Float
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from ecommerce.cart.models import Cart
@@ -17,9 +17,13 @@ class User(Base):
     phone_number: Mapped[str] = mapped_column(unique=True)
     telegram_id: Mapped[str] = mapped_column(unique=True)
     username: Mapped[str] = mapped_column(unique=True, nullable=True)
+    image: Mapped[str] = mapped_column(nullable=True)
     address: Mapped[str] = mapped_column(nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
     is_admin: Mapped[bool] = mapped_column(default=False)
+
+    lat: Mapped[float] = mapped_column(Float, nullable=True)
+    lng: Mapped[float] = mapped_column(Float, nullable=True)
 
     orders: Mapped[List[Order]] = relationship()
 

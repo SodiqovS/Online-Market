@@ -1,15 +1,45 @@
+import os
+
 from async_lru import alru_cache
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.orm import joinedload
 
 from . import models, schema
 from .models import Category
 
+ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/jpg"]
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
 
-async def create_new_category(request: schema.CategoryCreate, database: AsyncSession) -> models.Category:
-    new_category = models.Category(name=request.name)
+
+async def save_image(file: UploadFile, folder: str = "static/images") -> str:
+    if file.content_type not in ALLOWED_IMAGE_FORMATS:
+        raise HTTPException(status_code=400, detail=f"Invalid image format: {file.content_type}")
+
+    contents = await file.read()
+    if len(contents) > MAX_IMAGE_SIZE:
+        raise HTTPException(status_code=400, detail=f"Image size exceeds 10 MB: {file.filename}")
+
+    # Reset the image read pointer
+    await file.seek(0)
+
+    # Ensure the folder exists
+    os.makedirs(folder, exist_ok=True)
+
+    # Save the image
+    file_location = os.path.join(folder, file.filename)
+    with open(file_location, "wb+") as file_object:
+        file_object.write(contents)
+
+    # Return the image URL
+    return f"/{folder}/{file.filename}"
+
+
+async def create_new_category(name, image, database: AsyncSession) -> models.Category:
+    image_url = await save_image(image, folder="static/images/categories")
+
+    new_category = models.Category(name=name, image_url=image_url)
     database.add(new_category)
     await database.commit()
     await database.refresh(new_category)
@@ -52,30 +82,8 @@ async def create_product(name, quantity, description, price, category_id, images
     await database.refresh(product)
     await database.flush()
 
-    ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/gif"]
-    MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
-
-    # Validate image formats and size
     for image in images:
-        if image.content_type not in ALLOWED_IMAGE_FORMATS:
-            raise HTTPException(status_code=400, detail=f"Invalid image format: {image.content_type}")
-
-        contents = await image.read()
-        if len(contents) > MAX_IMAGE_SIZE:
-            raise HTTPException(status_code=400, detail=f"Image size exceeds 10 MB: {image.filename}")
-
-    # Reset the image read pointer
-    for image in images:
-        await image.seek(0)
-
-    for image in images:
-        file_location = f"static/images/{image.filename}"
-        with open(file_location, "wb+") as file_object:
-            file_object.write(image.file.read())
-
-        # Fayl URL manzilini bazaga qo'shish
-        image_url = f"/static/images/{image.filename}"
-
+        image_url = await save_image(image, folder="static/images/products")
         new_image = models.Image(product_id=product.id, url=image_url)
         database.add(new_image)
 
