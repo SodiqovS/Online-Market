@@ -57,5 +57,5 @@ async def login(auth_code: schema.AuthCode, database: AsyncSession = Depends(db.
 
 @router.get('/refresh', response_model=TokenInfo, response_model_exclude_none=True)
 async def refresh_access_token(user: User = Depends(get_auth_user_by_refresh_token)):
-    access_token = await create_access_token(data={"sub": user.phone_number})
+    access_token = await create_access_token(data={"sub": user.phone_number, "user_id": user.id})
     return TokenInfo(access_token=access_token)

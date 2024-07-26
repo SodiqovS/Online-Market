@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, status, Response
-from sqlalchemy.ext.asyncio import  AsyncSession
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ecommerce import db
 from ecommerce.auth.jwt import get_current_user
 from ecommerce.user.schema import User
-from .schema import ShowCart, Message
+from .schema import ShowCart
 from .services import add_to_cart, get_all_items, remove_cart_item
 
 router = APIRouter(
@@ -31,4 +31,3 @@ async def add_product_to_cart(product_id: int, quantity: int = 1, current_user: 
 async def remove_cart_item_by_id(cart_item_id: int, current_user: User = Depends(get_current_user),
                                  database: AsyncSession = Depends(db.get_db)):
     await remove_cart_item(cart_item_id, current_user, database)
-

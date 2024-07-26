@@ -20,6 +20,7 @@ class DisplayUser(BaseModel):
     first_name: constr(min_length=2, max_length=50)
     last_name: Optional[str]
     phone_number: str
+    image: Optional[str]
     telegram_id: Optional[int]
     username: Optional[str]
     created_at: Optional[datetime]

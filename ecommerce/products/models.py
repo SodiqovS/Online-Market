@@ -1,8 +1,7 @@
-# products/models.py
-
 from typing import List
-from sqlalchemy import ForeignKey, Integer, String
-from sqlalchemy.orm import relationship, mapped_column, Mapped
+from sqlalchemy import ForeignKey, Integer, String, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import relationship, mapped_column, Mapped, joinedload
 from ecommerce.db import Base
 
 
@@ -12,8 +11,6 @@ class Category(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(unique=True, nullable=False)
     image_url: Mapped[str] = mapped_column(nullable=False)
-
-    products: Mapped[List["Product"]] = relationship("Product", back_populates="category", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Category(id={self.id}, name={self.name})>"
@@ -25,8 +22,6 @@ class Image(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
     url: Mapped[str] = mapped_column(nullable=False)
-
-    product: Mapped["Product"] = relationship("Product", back_populates="images")
 
     def __repr__(self) -> str:
         return f"<Image(id={self.id}, url={self.url})>"
@@ -42,8 +37,19 @@ class Product(Base):
     price: Mapped[int] = mapped_column(Integer, nullable=False)
     category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
 
-    category: Mapped["Category"] = relationship("Category", back_populates="products")
-    images: Mapped[List["Image"]] = relationship("Image", back_populates="product")
+    category: Mapped[Category] = relationship()
+    images: Mapped[List[Image]] = relationship()
+
+    # async def load_related(self, database: AsyncSession):
+    #     result = await database.execute(
+    #         select(Product)
+    #         .options(
+    #             joinedload(Product.category),
+    #             joinedload(Product.images)
+    #         )
+    #         .filter(Product.id == self.id)
+    #     )
+    #     return result.scalar()
 
     def __repr__(self) -> str:
         return f"<Product(id={self.id}, name={self.name}, category_id={self.category_id})>"

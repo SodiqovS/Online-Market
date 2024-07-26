@@ -22,12 +22,9 @@ class ProductBase(BaseModel):
     category_id: int
 
 
-class CategoryCreate(CategoryBase):
-    image_url: str
-
-
 class Category(CategoryBase):
     id: int
+    image_url: str
 
     class Config:
         from_attributes = True
@@ -67,10 +64,3 @@ class ProductListing(Product):
 
     class Config:
         from_attributes = True
-
-
-class ProductPaging(BaseModel):
-    products: List[ProductListing]
-    total_products: int
-    total_pages: int
-    current_page: int

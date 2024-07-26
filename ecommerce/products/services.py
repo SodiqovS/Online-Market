@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload
 from . import models, schema
 from .models import Category
 
-ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/jpg"]
+ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/svg"]
 MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 
@@ -48,8 +48,8 @@ async def create_new_category(name, image, database: AsyncSession) -> models.Cat
 
 @alru_cache
 async def get_all_categories(database: AsyncSession):
-    result = await database.execute(select(models.Category.id, models.Category.name))
-    categories = result.all()
+    result = await database.execute(select(models.Category))
+    categories = result.scalars().all()
     return categories
 
 
@@ -94,17 +94,11 @@ async def create_product(name, quantity, description, price, category_id, images
 
 
 async def get_product_by_id(product_id: int, database: AsyncSession):
-    query = select(models.Product).options(
-        joinedload(models.Product.images),
-        joinedload(models.Product.category)
-    ).where(models.Product.id == product_id)
-
-    result = await database.execute(query)
-    product = result.scalar()
+    product = await database.get(models.Product, product_id)
 
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
-    return product
+    return await product.load_related(database=database)
 
 
 async def update_product(product_id: int, request, database: AsyncSession):
@@ -124,7 +118,7 @@ async def update_product(product_id: int, request, database: AsyncSession):
         product.category_id = request.category_id
 
     await database.commit()
-    await database.refresh(product)
+    await database.refresh(product, attribute_names=["images", "category"])
     return product
 
 

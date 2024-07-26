@@ -1,15 +1,16 @@
 import datetime
-from typing import List, Optional
-
-from pydantic import BaseModel
+from typing import Optional, Any
 
 from ecommerce.products.schema import ProductListing
+
+from typing import List, Type, TypeVar
+from pydantic import BaseModel
 
 
 class ShowOrderDetails(BaseModel):
     id: int
     order_id: int
-    product_order_details: ProductListing
+    product: ProductListing
 
     class Config:
         from_attributes = True

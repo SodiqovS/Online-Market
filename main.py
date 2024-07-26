@@ -9,7 +9,6 @@ from ecommerce import config
 from ecommerce.auth import router as auth_router
 
 from ecommerce.cart import router as cart_router
-from ecommerce.db import database
 from ecommerce.orders import router as order_router
 from ecommerce.products import router as product_router
 from ecommerce.user import router as user_router
@@ -66,27 +65,18 @@ app.add_middleware(
 # API Key Authentication
 API_KEY = config.XAPIKEY
 
+#
+# @app.middleware("http")
+# async def verify_api_key(request: Request, call_next):
+#     api_key = request.cookies.get("x-api-key")
+#     if api_key != API_KEY:
+#         return JSONResponse(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             content={"detail": "Invalid or missing API key"},
+#         )
+#     response = await call_next(request)
+#     return response
 
-@app.middleware("http")
-async def verify_api_key(request: Request, call_next):
-    api_key = request.cookies.get("x-api-key")
-    if api_key != API_KEY:
-        return JSONResponse(
-            status_code=status.HTTP_403_FORBIDDEN,
-            content={"detail": "Invalid or missing API key"},
-        )
-    response = await call_next(request)
-    return response
-
-
-@app.on_event("startup")
-async def startup():
-    await database.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
 
 app.include_router(auth_router.router)
 app.include_router(user_router.router)
@@ -95,14 +85,14 @@ app.include_router(cart_router.router)
 app.include_router(order_router.router)
 app.include_router(root_router.router)
 
-celery = Celery(
-    __name__,
-    broker=f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}/{config.REDIS_DB}",
-    backend=f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}/{config.REDIS_DB}"
-)
-celery.conf.imports = [
-    'ecommerce.orders.tasks',
-]
+# celery = Celery(
+#     __name__,
+#     broker=f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}/{config.REDIS_DB}",
+#     backend=f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}/{config.REDIS_DB}"
+# )
+# celery.conf.imports = [
+#     'ecommerce.orders.tasks',
+# ]
 
 if "__main__" == __name__:
     uvicorn.run(app=app)

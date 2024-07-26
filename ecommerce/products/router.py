@@ -63,17 +63,20 @@ async def delete_category_by_id(category_id: int,
 @router.get('/fake')
 async def fake_products(database: AsyncSession = Depends(db.get_db)):
     fake = Faker()
-    for _ in range(100):
-        new_product = Product(
-            name=fake.name(),
-            quantity=fake.random_int(100, 1000),
-            description=fake.text(max_nb_chars=100, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
-            price=fake.random_int(1000, 10000000),
-            category_id=fake.random_int(12, 21),
-        )
-        database.add(new_product)
+    try:
+        for _ in range(100):
+            new_product = Product(
+                name=fake.name(),
+                quantity=fake.random_int(100, 1000),
+                description=fake.text(max_nb_chars=100, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
+                price=fake.random_int(1000, 10000000),
+                category_id=fake.random_int(1, 10),
+            )
+            database.add(new_product)
+
         await database.commit()
-        await database.refresh(new_product)
+    except:
+        return HTTPException(status_code=400, detail='Something went wrong')
 
     return {'message': 'Fake successfully'}
 
