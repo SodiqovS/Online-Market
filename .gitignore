@@ -5,4 +5,4 @@ __pycache__/
 .pyc
 venv
 static/images/*
-ecommerce/.env
+.env
