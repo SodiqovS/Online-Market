@@ -81,7 +81,7 @@ async def initiate_order(current_user, database: AsyncSession, shipping_address=
 
     order = Order(
         customer_id=current_user.id,
-        shipping_address=current_user.address,
+        shipping_address=shipping_address,
         order_amount=total_order_amount,
     )
 
