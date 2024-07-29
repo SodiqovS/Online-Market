@@ -5,6 +5,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from . import models, schema
+from ecommerce.image import save_image
 
 
 async def all_users(database: AsyncSession):
@@ -41,6 +42,15 @@ async def edit_profile(request: schema.ProfileUpdate, current_user: models.User,
     await database.refresh(current_user)
 
     return {"message": "Profile Updated Successfully"}
+
+
+async def edit_profile_image(image, current_user, database):
+    image_url = await save_image(image, folder="static/images/users")
+    current_user.image_url = image_url
+    print(current_user)
+    await database.commit()
+    await database.refresh(current_user)
+    return {"message": "Profile Image Updated Successfully"}
 
 
 async def update_user_by_id(user_id, request, database: AsyncSession):

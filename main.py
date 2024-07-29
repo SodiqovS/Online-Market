@@ -65,17 +65,17 @@ app.add_middleware(
 # API Key Authentication
 API_KEY = config.XAPIKEY
 
-#
-# @app.middleware("http")
-# async def verify_api_key(request: Request, call_next):
-#     api_key = request.cookies.get("x-api-key")
-#     if api_key != API_KEY:
-#         return JSONResponse(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             content={"detail": "Invalid or missing API key"},
-#         )
-#     response = await call_next(request)
-#     return response
+
+@app.middleware("http")
+async def verify_api_key(request: Request, call_next):
+    api_key = request.cookies.get("x-api-key")
+    if api_key != API_KEY:
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={"detail": "Invalid or missing API key"},
+        )
+    response = await call_next(request)
+    return response
 
 
 app.include_router(auth_router.router)
@@ -85,14 +85,14 @@ app.include_router(cart_router.router)
 app.include_router(order_router.router)
 app.include_router(root_router.router)
 
-# celery = Celery(
-#     __name__,
-#     broker=f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}/{config.REDIS_DB}",
-#     backend=f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}/{config.REDIS_DB}"
-# )
-# celery.conf.imports = [
-#     'ecommerce.orders.tasks',
-# ]
+celery = Celery(
+    __name__,
+    broker=f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}/{config.REDIS_DB}",
+    backend=f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}/{config.REDIS_DB}"
+)
+celery.conf.imports = [
+    'ecommerce.orders.tasks',
+]
 
 if "__main__" == __name__:
     uvicorn.run(app=app)

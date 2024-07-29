@@ -1,7 +1,6 @@
 from typing import List
-from sqlalchemy import ForeignKey, Integer, String, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import relationship, mapped_column, Mapped, joinedload
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 from ecommerce.db import Base
 
 

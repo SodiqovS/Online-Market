@@ -30,7 +30,7 @@ class User(Base):
     cart: Mapped[Cart] = relationship()
 
     def __str__(self):
-        return f'{self.first_name} {self.last_name}'
+        return f'<User {self.id}, {self.first_name} {self.last_name}>'
 
     def __init__(self, first_name, last_name, phone_number, telegram_id, *args, **kwargs):
         super().__init__(**kwargs)

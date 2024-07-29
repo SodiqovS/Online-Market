@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from async_lru import alru_cache
-from faker import Faker
+
 from fastapi import APIRouter, Depends, status, Response, HTTPException, UploadFile, File, Form
 from fastapi.params import Query
 
@@ -13,7 +13,7 @@ from ecommerce import db
 from . import schema, services, validator
 from ecommerce.auth.jwt import get_current_admin
 from ecommerce.user.schema import User
-from .models import Product, Category
+from .models import Product
 from ..custom_page import CustomPage
 
 router = APIRouter(
@@ -22,15 +22,15 @@ router = APIRouter(
 )
 
 
-@router.get('/category/fake')
-async def fake_category(database: AsyncSession = Depends(db.get_db)):
-    fake = Faker()
-    for _ in range(10):
-        new_category = Category(name=fake.name(), image_url=fake.url())
-        database.add(new_category)
-        await database.commit()
-        await database.refresh(new_category)
-    return {'message': 'Category fake data'}
+# @router.get('/category/fake')
+# async def fake_category(database: AsyncSession = Depends(db.get_db)):
+#     fake = Faker()
+#     for _ in range(10):
+#         new_category = Category(name=fake.name(), image_url=fake.url())
+#         database.add(new_category)
+#         await database.commit()
+#         await database.refresh(new_category)
+#     return {'message': 'Category fake data'}
 
 
 @router.post('/category', status_code=status.HTTP_201_CREATED)
@@ -60,25 +60,25 @@ async def delete_category_by_id(category_id: int,
     return {'message': 'Category deleted'}
 
 
-@router.get('/fake')
-async def fake_products(database: AsyncSession = Depends(db.get_db)):
-    fake = Faker()
-    try:
-        for _ in range(100):
-            new_product = Product(
-                name=fake.name(),
-                quantity=fake.random_int(100, 1000),
-                description=fake.text(max_nb_chars=100, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
-                price=fake.random_int(1000, 10000000),
-                category_id=fake.random_int(1, 10),
-            )
-            database.add(new_product)
-
-        await database.commit()
-    except:
-        return HTTPException(status_code=400, detail='Something went wrong')
-
-    return {'message': 'Fake successfully'}
+# @router.get('/fake')
+# async def fake_products(database: AsyncSession = Depends(db.get_db)):
+#     fake = Faker()
+#     try:
+#         for _ in range(100):
+#             new_product = Product(
+#                 name=fake.name(),
+#                 quantity=fake.random_int(100, 1000),
+#                 description=fake.text(max_nb_chars=100, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
+#                 price=fake.random_int(1000, 10000000),
+#                 category_id=fake.random_int(1, 10),
+#             )
+#             database.add(new_product)
+#
+#         await database.commit()
+#     except:
+#         return HTTPException(status_code=400, detail='Something went wrong')
+#
+#     return {'message': 'Fake successfully'}
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=schema.Product)

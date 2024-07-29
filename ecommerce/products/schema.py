@@ -10,10 +10,6 @@ class Image(BaseModel):
         from_attributes = True
 
 
-class CategoryBase(BaseModel):
-    name: str
-
-
 class ProductBase(BaseModel):
     name: str
     quantity: int
@@ -22,17 +18,10 @@ class ProductBase(BaseModel):
     category_id: int
 
 
-class Category(CategoryBase):
-    id: int
-    image_url: str
-
-    class Config:
-        from_attributes = True
-
-
-class ListCategory(BaseModel):
+class Category(BaseModel):
     id: int
     name: str
+    image_url: str
 
     class Config:
         from_attributes = True
@@ -54,13 +43,6 @@ class Product(ProductBase):
     id: int
     images: List[Image] = []
     category: Category
-
-    class Config:
-        from_attributes = True
-
-
-class ProductListing(Product):
-    category: ListCategory
 
     class Config:
         from_attributes = True

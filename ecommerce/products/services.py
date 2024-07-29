@@ -1,39 +1,12 @@
-import os
 
 from async_lru import alru_cache
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status, UploadFile
-from sqlalchemy.orm import joinedload
+from fastapi import HTTPException, status
 
-from . import models, schema
+from . import models
 from .models import Category
-
-ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/svg"]
-MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
-
-
-async def save_image(file: UploadFile, folder: str = "static/images") -> str:
-    if file.content_type not in ALLOWED_IMAGE_FORMATS:
-        raise HTTPException(status_code=400, detail=f"Invalid image format: {file.content_type}")
-
-    contents = await file.read()
-    if len(contents) > MAX_IMAGE_SIZE:
-        raise HTTPException(status_code=400, detail=f"Image size exceeds 10 MB: {file.filename}")
-
-    # Reset the image read pointer
-    await file.seek(0)
-
-    # Ensure the folder exists
-    os.makedirs(folder, exist_ok=True)
-
-    # Save the image
-    file_location = os.path.join(folder, file.filename)
-    with open(file_location, "wb+") as file_object:
-        file_object.write(contents)
-
-    # Return the image URL
-    return f"/{folder}/{file.filename}"
+from ecommerce.image import save_image
 
 
 async def create_new_category(name, image, database: AsyncSession) -> models.Category:

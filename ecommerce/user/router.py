@@ -2,7 +2,7 @@ from typing import Optional
 
 from async_lru import alru_cache
 from faker import Faker
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, UploadFile, File
 
 from fastapi_pagination.ext.sqlalchemy import paginate
 
@@ -52,6 +52,13 @@ async def edit_profile(request: schema.ProfileUpdate,
                        current_user: User = Depends(get_current_user),
                        database: AsyncSession = Depends(db.get_db)):
     return await services.edit_profile(request, current_user, database)
+
+
+@router.put('/profile/image')
+async def edit_profile(image: UploadFile = File(...),
+                       current_user: User = Depends(get_current_user),
+                       database: AsyncSession = Depends(db.get_db)):
+    return await services.edit_profile_image(image, current_user, database)
 
 
 @alru_cache
