@@ -20,7 +20,6 @@ engine = create_async_engine(
             pool_pre_ping=True,
             pool_size=20,
             max_overflow=10,
-            echo_pool='debug',
             pool_recycle=499,
         )
 SessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)
