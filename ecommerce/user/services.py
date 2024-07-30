@@ -44,10 +44,9 @@ async def edit_profile(request: schema.ProfileUpdate, current_user: models.User,
     return {"message": "Profile Updated Successfully"}
 
 
-async def edit_profile_image(image, current_user, database):
+async def edit_profile_image(image, current_user: models.User, database):
     image_url = await save_image(image, folder="static/images/users")
-    current_user.image_url = image_url
-    print(current_user)
+    current_user.image = image_url
     await database.commit()
     await database.refresh(current_user)
     return {"message": "Profile Image Updated Successfully"}
