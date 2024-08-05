@@ -26,3 +26,7 @@ class ShowOrder(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class OrderRequest(BaseModel):
+    shipping_address: Optional[str] = None

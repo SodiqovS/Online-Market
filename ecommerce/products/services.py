@@ -1,12 +1,17 @@
-
 from async_lru import alru_cache
-from sqlalchemy import select
+from sqlalchemy import select, join
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
 from . import models
 from .models import Category
 from ecommerce.image import save_image
+
+from sqlalchemy import func
+from sqlalchemy.orm import Session, joinedload
+
+from ecommerce.orders.models import OrderDetails
+from ecommerce.products.models import Product
 
 
 async def create_new_category(name, image, database: AsyncSession) -> models.Category:
@@ -64,6 +69,10 @@ async def create_product(name, quantity, description, price, category_id, images
     await database.refresh(product, attribute_names=['images', 'category'])
 
     return product
+
+
+async def get_best_selling_products(database: AsyncSession, limit: int = 10):
+    ...
 
 
 async def get_product_by_id(product_id: int, database: AsyncSession):

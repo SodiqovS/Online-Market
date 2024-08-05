@@ -43,6 +43,7 @@ class Product(ProductBase):
     id: int
     images: List[Image] = []
     category: Category
+    sold_quantity: int
 
     class Config:
         from_attributes = True

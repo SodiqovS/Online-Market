@@ -18,45 +18,69 @@ from ecommerce.root import router as root_router
 from fastapi_pagination import add_pagination
 
 description = """
-Ecommerce API
+Online Market API
+## Auth
+You will be able to:
+* Login or register an account
+* Refresh your access token
 
 ## Users
 
 You will be able to:
 
-* **Create users** 
-* **Read users** 
+* **Read users**  (admin)
+* **Update users** (admin)
+* **Delete users** (admin)
+* **Profile methods**
+
+## Products
+
+You will be able to:
+* **Create categories** (admin)
+* **Read categories**
+* **Update categories** (admin)
+* **Delete categories** (admin)
+
+* **Create products** (admin)
+* **Read products**
+* **Update products** (admin)
+* **Delete products** (admin)
+
+## Cart
+You will be able to:
+* **Add cart to item**
+* ** Remove cart from item**
+* **Update cart item quantity**
+
+## Order
+You will be able to:
+* **Create orders**
+* **Ger your orders**
+* **Get all orders** (admin)
+
 """
 
 
 app = FastAPI(
     title="EcommerceApp",
     description=description,
-    version="0.0.1",
-    terms_of_service="https://example.com/terms/",
+    version="0.0.3",
     contact={
-        "name": "Mukul Mantosh",
-        "url": "https://x-force.example.com/contact/",
-    },
-    license_info={
-        "name": "Apache 2.0",
-        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+        "name": "Sodiqov Sodiqjon",
+        "email": "sodiqovs2002@gmail.com",
     },
 )
 
 
 add_pagination(app)
-origins = [
-    "http://localhost",
-    "http://localhost:8000",
-]
+origins = ["*"]
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow only the specific server
+    allow_origins=origins,  # Allow only the specific server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,16 +90,16 @@ app.add_middleware(
 API_KEY = config.XAPIKEY
 
 
-@app.middleware("http")
-async def verify_api_key(request: Request, call_next):
-    api_key = request.cookies.get("x-api-key")
-    if api_key != API_KEY:
-        return JSONResponse(
-            status_code=status.HTTP_403_FORBIDDEN,
-            content={"detail": "Invalid or missing API key"},
-        )
-    response = await call_next(request)
-    return response
+# @app.middleware("http")
+# async def verify_api_key(request: Request, call_next):
+#     api_key = request.cookies.get("x-api-key")
+#     if api_key != API_KEY:
+#         return JSONResponse(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             content={"detail": "Invalid or missing API key"},
+#         )
+#     response = await call_next(request)
+#     return response
 
 
 app.include_router(auth_router.router)

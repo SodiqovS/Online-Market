@@ -1,10 +1,9 @@
 import os
-
+import uuid
 from fastapi import UploadFile, HTTPException
 
-ALLOWED_IMAGE_FORMATS = ["image/*", "image/jpeg", "image/png", "image/jpg", "image/gif",
-                         "image/svg", "image/bmp", "image/tiff", "image/webp", "image/heif"
-                         ]
+ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/jpg", "image/gif",
+                         "image/svg+xml", "image/bmp", "image/tiff", "image/webp", "image/heif"]
 MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 
@@ -16,16 +15,15 @@ async def save_image(file: UploadFile, folder: str = "static/images") -> str:
     if len(contents) > MAX_IMAGE_SIZE:
         raise HTTPException(status_code=400, detail=f"Image size exceeds 10 MB: {file.filename}")
 
-    # Reset the image read pointer
     await file.seek(0)
 
-    # Ensure the folder exists
     os.makedirs(folder, exist_ok=True)
 
-    # Save the image
-    file_location = os.path.join(folder, file.filename)
+    file_extension = file.filename.split('.')[-1]
+    unique_filename = f"{uuid.uuid4()}.{file_extension}"
+    file_location = os.path.join(folder, unique_filename)
+
     with open(file_location, "wb+") as file_object:
         file_object.write(contents)
 
-    # Return the image URL
-    return f"/{folder}/{file.filename}"
+    return f"/{folder}/{unique_filename}"

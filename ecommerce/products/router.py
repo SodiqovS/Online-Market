@@ -14,6 +14,7 @@ from . import schema, services, validator
 from ecommerce.auth.jwt import get_current_admin
 from ecommerce.user.schema import User
 from .models import Product
+from .services import get_best_selling_products
 from ..custom_page import CustomPage
 
 router = APIRouter(
@@ -100,6 +101,12 @@ async def create_product(name: str = Form(...),
     product = await services.create_product(name, quantity, description, price, category_id, images, database)
 
     return product
+
+
+@router.get("/best-selling-products", )
+async def best_selling_products(limit: int = 10, database: AsyncSession = Depends(db.get_db)):
+    products = await get_best_selling_products(database, limit)
+    return products
 
 
 @router.get('/{product_id}', response_model=schema.Product)

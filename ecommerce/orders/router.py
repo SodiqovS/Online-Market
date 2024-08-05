@@ -8,7 +8,7 @@ from ecommerce import db
 from ecommerce.auth.jwt import get_current_user, get_current_admin
 from ecommerce.orders.services import initiate_order, get_order_listing, get_all_orders
 from ecommerce.user.schema import User
-from .schema import ShowOrder
+from .schema import ShowOrder, OrderRequest
 from ..custom_page import CustomPage
 
 router = APIRouter(
@@ -18,10 +18,10 @@ router = APIRouter(
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=ShowOrder)
-async def initiate_order_processing(shipping_address: Optional[str],
+async def initiate_order_processing(req: OrderRequest,
                                     current_user: User = Depends(get_current_user),
                                     database: AsyncSession = Depends(db.get_db)):
-    result = await initiate_order(current_user, database, shipping_address)
+    result = await initiate_order(current_user, database, req=req)
     return result
 
 

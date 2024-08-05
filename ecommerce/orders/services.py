@@ -9,6 +9,7 @@ from sqlalchemy.orm import joinedload
 
 from ecommerce.cart.models import Cart, CartItems
 from ecommerce.orders.models import Order, OrderDetails
+from ecommerce.orders.schema import OrderRequest
 from ecommerce.products.models import Product
 
 
@@ -23,17 +24,14 @@ async def get_cart_items(cart_id: int, database: AsyncSession) -> Sequence[Row[A
         )
     )
     cart_items_objects = result.unique().scalars().all()
-    for item in cart_items_objects:
-        print(item.product)
+
     return cart_items_objects
 
 
 async def post_order_details(order_id: int, cart_obj, database: AsyncSession):
     cart_items = await get_cart_items(cart_obj.id, database)
     order_details_list = []
-    print('1')
     for item in cart_items:
-        print(2)
         order_details = OrderDetails(
             order_id=order_id,
             product_id=item.product.id,
@@ -51,8 +49,8 @@ async def delete_cart_items(cart_id: int, database: AsyncSession):
     await database.commit()
 
 
-async def initiate_order(current_user, database: AsyncSession, shipping_address=""):
-    if not current_user.address and not shipping_address:
+async def initiate_order(current_user, database: AsyncSession, req: OrderRequest):
+    if not current_user.address and not req.shipping_address:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Please provide a shipping address"
         )
@@ -81,7 +79,7 @@ async def initiate_order(current_user, database: AsyncSession, shipping_address=
 
     order = Order(
         customer_id=current_user.id,
-        shipping_address=shipping_address,
+        shipping_address=req.shipping_address,
         order_amount=total_order_amount,
     )
 
@@ -89,6 +87,13 @@ async def initiate_order(current_user, database: AsyncSession, shipping_address=
     await database.commit()
     await database.refresh(order, attribute_names=["user_info", "order_details"])
     await post_order_details(order.id, cart_obj, database)
+
+    for item in cart_items:
+        product = item.product
+        product.quantity -= item.quantity
+        product.sold_quantity += item.quantity
+
+    await database.commit()
 
     await delete_cart_items(cart_obj.id, database)
 

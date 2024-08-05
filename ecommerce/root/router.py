@@ -1,6 +1,4 @@
 from fastapi import APIRouter, Request
-
-
 router = APIRouter(
     tags=['root'],
     prefix=''
@@ -13,4 +11,5 @@ async def root(request: Request):
     return {
         "host": request.client.host,
         "port": request.client.port,
+        "etc": request.url
     }
