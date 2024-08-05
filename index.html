@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Images</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .product {
+            margin-bottom: 20px;
+        }
+        .product img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Product Images</h1>
+    <div id="product-images">
+        <!-- Product images will be inserted here -->
+    </div>
+
+    <script>
+        const baseUrl = 'https://api.sodiqdev.cloud';
+        const apiKey = 'rYKcw1YebNjfxDkVVGkbxDjqCI5ZGRbAdCm4ctCN541QwdZSPBLHSSBva5wOdIgYyVfGbmt3RwtdyDawfAN4o3KMo8i7ubEHibeDB6M6jObgv69MHKTHBnK9c8to1wYn';
+
+        const data = {
+  "items": [
+    {
+      "name": "Product4",
+      "quantity": 650,
+      "description": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic",
+      "price": 4320,
+      "category_id": 1,
+      "id": 4,
+      "images": [
+        {
+          "id": 5,
+          "url": "/static/images/products//u1f912_u2665-ufe0f.png"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Category 1",
+        "image_url": "/static/images/categories/-5244873646965632977_120.jpg"
+      }
+    },
+    {
+      "name": "Product3",
+      "quantity": 1000,
+      "description": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic",
+      "price": 132,
+      "category_id": 2,
+      "id": 3,
+      "images": [
+        {
+          "id": 4,
+          "url": "/static/images/products/IMG_20231005_135713_959.jpg"
+        }
+      ],
+      "category": {
+        "id": 2,
+        "name": "Category 2",
+        "image_url": "/static/images/categories/-5244873646965632985_120.jpg"
+      }
+    },
+    {
+      "name": "Product2",
+      "quantity": 1000,
+      "description": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic",
+      "price": 12,
+      "category_id": 1,
+      "id": 2,
+      "images": [
+        {
+          "id": 3,
+          "url": "/static/images/products/20220530202522!Real_Madrid.png"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Category 1",
+        "image_url": "/static/images/categories/-5244873646965632977_120.jpg"
+      }
+    },
+    {
+      "name": "Product1",
+      "quantity": 100,
+      "description": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic",
+      "price": 100,
+      "category_id": 1,
+      "id": 1,
+      "images": [
+        {
+          "id": 2,
+          "url": "/static/images/products/BoardingPass_MyNameOnFutureMission.png"
+        },
+        {
+          "id": 1,
+          "url": "/static/images/products//u1f912_u2665-ufe0f1.png"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Category 1",
+        "image_url": "/static/images/categories/-5244873646965632977_120.jpg"
+      }
+    }
+  ],
+  "total": 4,
+  "page": 1,
+  "size": 10,
+  "pages": 1,
+  "links": {
+    "first": "/products/?sort_by=id&sort_order=desc&size=10&page=1",
+    "last": "/products/?sort_by=id&sort_order=desc&size=10&page=1",
+    "self": "/products/?sort_by=id&sort_order=desc&page=1&size=10",
+    "next": null,
+    "prev": null
+  }
+};
+
+        async function fetchImage(url) {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return URL.createObjectURL(blob);
+        }
+
+        async function renderImages(data) {
+            const container = document.getElementById('product-images');
+            for (const item of data.items) {
+                const productDiv = document.createElement('div');
+                productDiv.classList.add('product');
+
+                // Product title
+                const title = document.createElement('h2');
+                title.textContent = item.name;
+                productDiv.appendChild(title);
+
+                // Category info
+                const categoryDiv = document.createElement('div');
+                categoryDiv.classList.add('category');
+                const categoryTitle = document.createElement('h3');
+                categoryTitle.textContent = `Category: ${item.category.name}`;
+                categoryDiv.appendChild(categoryTitle);
+
+                // Category image
+                const categoryImg = document.createElement('img');
+                categoryImg.src = `${baseUrl}${item.category.image_url}`;
+                categoryImg.alt = `Category Image for ${item.category.name}`;
+                categoryDiv.appendChild(categoryImg);
+                productDiv.appendChild(categoryDiv);
+
+                // Product images
+                for (const image of item.images) {
+                    const img = document.createElement('img');
+                    const imageUrl = `${baseUrl}${image.url}`;
+                    try {
+                        img.src = await fetchImage(imageUrl);
+                        img.alt = `${item.name} Image`;
+                    } catch (error) {
+                        console.error(`Failed to load image ${imageUrl}`, error);
+                    }
+                    productDiv.appendChild(img);
+                }
+
+                container.appendChild(productDiv);
+            }
+        }
+
+        renderImages(data);
+    </script>
+</body>
+</html>

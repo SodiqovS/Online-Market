@@ -2,10 +2,12 @@ import os
 import uuid
 from fastapi import UploadFile, HTTPException
 
+from ecommerce import config
+
 ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/jpg", "image/gif",
                          "image/svg+xml", "image/bmp", "image/tiff", "image/webp", "image/heif"]
 MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
-
+BASE_URL = config.BASE_URL
 
 async def save_image(file: UploadFile, folder: str = "static/images") -> str:
     if file.content_type not in ALLOWED_IMAGE_FORMATS:
@@ -26,4 +28,4 @@ async def save_image(file: UploadFile, folder: str = "static/images") -> str:
     with open(file_location, "wb+") as file_object:
         file_object.write(contents)
 
-    return f"/{folder}/{unique_filename}"
+    return f"{BASE_URL}/{folder}/{unique_filename}"
