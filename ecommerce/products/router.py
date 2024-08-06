@@ -16,6 +16,7 @@ from ecommerce.user.schema import User
 from .models import Product
 from .services import get_best_selling_products
 from ..custom_page import CustomPage
+from ..fake.fake import create_test_data
 
 router = APIRouter(
     tags=['Products'],
@@ -23,15 +24,15 @@ router = APIRouter(
 )
 
 
-# @router.get('/category/fake')
-# async def fake_category(database: AsyncSession = Depends(db.get_db)):
-#     fake = Faker()
-#     for _ in range(10):
-#         new_category = Category(name=fake.name(), image_url=fake.url())
-#         database.add(new_category)
-#         await database.commit()
-#         await database.refresh(new_category)
-#     return {'message': 'Category fake data'}
+@router.get('/fake')
+async def fake_data(database: AsyncSession = Depends(db.get_db),
+                    current_admin: User = Depends(get_current_admin)):
+    categories, products = await create_test_data(database)
+    res = {
+        "categories": categories,
+        "products": products
+    }
+    return res
 
 
 @router.post('/category', status_code=status.HTTP_201_CREATED)
@@ -59,27 +60,6 @@ async def delete_category_by_id(category_id: int,
                                 current_admin: User = Depends(get_current_admin)):
     await services.delete_category_by_id(category_id, database)
     return {'message': 'Category deleted'}
-
-
-# @router.get('/fake')
-# async def fake_products(database: AsyncSession = Depends(db.get_db)):
-#     fake = Faker()
-#     try:
-#         for _ in range(100):
-#             new_product = Product(
-#                 name=fake.name(),
-#                 quantity=fake.random_int(100, 1000),
-#                 description=fake.text(max_nb_chars=100, ext_word_list=['abc', 'def', 'ghi', 'jkl']),
-#                 price=fake.random_int(1000, 10000000),
-#                 category_id=fake.random_int(1, 10),
-#             )
-#             database.add(new_product)
-#
-#         await database.commit()
-#     except:
-#         return HTTPException(status_code=400, detail='Something went wrong')
-#
-#     return {'message': 'Fake successfully'}
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=schema.Product)

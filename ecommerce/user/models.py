@@ -17,7 +17,8 @@ class User(Base):
     phone_number: Mapped[str] = mapped_column(unique=True)
     telegram_id: Mapped[str] = mapped_column(unique=True)
     username: Mapped[str] = mapped_column(unique=True, nullable=True)
-    image: Mapped[str] = mapped_column(nullable=True)
+    image: Mapped[str] = mapped_column(nullable=True,
+                                       default="https://api.sodiqdev.cloud/static/images/users/default_user.png")
     address: Mapped[str] = mapped_column(nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
     is_admin: Mapped[bool] = mapped_column(default=False)
